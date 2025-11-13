@@ -1,0 +1,25 @@
+# Go
+/backend/bin/
+/backend/pkg/
+/backend/*.exe
+/backend/*.out
+/backend/*.test
+
+# Node/Next.js
+/frontend/node_modules/
+/frontend/.next/
+/frontend/.env.local
+/frontend/.env*
+
+# Env
+.env
+
+# MacOS
+.DS_Store
+
+# Logs
+*.log
+
+# IDE
+.vscode/
+.idea/
