@@ -4,6 +4,7 @@
 /backend/*.exe
 /backend/*.out
 /backend/*.test
+/backend/firebase-key.json
 
 # Node/Next.js
 /frontend/node_modules/
