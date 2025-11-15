@@ -28,7 +28,7 @@ func (r *UserRepository) SaveUser(ctx context.Context, user domain.User) error {
 		UserID:  user.UserID,
 		Email:   user.Email,
 		Name:    user.Name,
-		Profile: user.Profile,
+		Profile: int(user.Profile),
 	}
 
 	log.Printf("Saving user name %s, email %s, profile %d", model.Name, model.Email, model.Profile)
@@ -56,7 +56,7 @@ func (r *UserRepository) FindById(ctx context.Context, userId string) (*domain.U
 		UserID:  userModel.UserID,
 		Email:   userModel.Email,
 		Name:    userModel.Name,
-		Profile: userModel.Profile,
+		Profile: domain.ProfileType(userModel.Profile),
 	}
 
 	return user, nil

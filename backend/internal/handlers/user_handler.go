@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/napat2224/socket-programming-chat-app/internal/domain"
 	"github.com/napat2224/socket-programming-chat-app/internal/services"
 )
 
@@ -16,7 +17,7 @@ type VerifyTokenResponse struct {
 	UserID  string `json:"userId"`
 	Email   string `json:"email"`
 	Name    string `json:"name"`
-	Profile string `json:"profile"`
+	Profile int `json:"profile"`
 }
 
 func NewUserHandler(userService *services.UserService) *UserHandler {
@@ -28,7 +29,7 @@ func NewUserHandler(userService *services.UserService) *UserHandler {
 type RegisterRequest struct {
 	IdToken string `json:"idToken" validate:"required"`
 	Name    string `json:"name" validate:"required"`
-	Profile string `json:"profile" validate:"required"`
+	Profile int `json:"profile" validate:"required"`
 }
 
 type RegisterResponse struct {
@@ -49,7 +50,7 @@ func (h *UserHandler) Register(c *fiber.Ctx) error {
 	log.Printf("name %s, profile %s", req.Name, req.Profile)
 
 	// Validate required fields
-	if req.IdToken == "" || req.Name == "" || req.Profile == "" {
+	if req.IdToken == "" || req.Name == "" || !domain.ProfileType(req.Profile).IsValid() {
 		return c.Status(fiber.StatusBadRequest).JSON(RegisterResponse{
 			Success: false,
 			Message: "Missing required fields: idToken, fullName, and role are required",
