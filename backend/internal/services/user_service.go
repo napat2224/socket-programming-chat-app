@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strconv"
 
 	"github.com/napat2224/socket-programming-chat-app/internal/domain"
 	"github.com/napat2224/socket-programming-chat-app/internal/repository"
@@ -33,12 +34,13 @@ func (s *UserService) Register(ctx context.Context, idToken string, name string,
 		return status.Error(codes.InvalidArgument, "invalid profile value")
 	}
 
+	profileStr := strconv.Itoa(profile)
 	customClaims := map[string]interface{}{
 		"name":    name,
-		"profile": profile,
+		"profile": profileStr,
 	}
 
-	log.Printf("Setting custom claims for user %s: %v, name: %s, profile: %s", uid, customClaims, name, profile)
+	log.Printf("Setting custom claims for user %s: %v, name: %s, profile: %d", uid, customClaims, name, profile)
 	if err := s.authService.SetCustomUserClaims(ctx, uid, customClaims); err != nil {
 		return status.Errorf(codes.Internal, "failed to set custom claims: %v", err)
 	}
@@ -56,8 +58,8 @@ func (s *UserService) Register(ctx context.Context, idToken string, name string,
 func (s *UserService) GetMe(ctx context.Context, userID string) (*domain.User, error) {
 	user, err := s.repo.FindById(ctx, userID)
 	if err != nil {
+		log.Println(err)
 		return nil, err
 	}
-
 	return user, nil
 }
