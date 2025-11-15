@@ -6,6 +6,7 @@ import {
   doSignInWithEmailAndPassword,
   doSignInWithGoogle,
 } from "@/lib/firebase/auth";
+import { Button } from "@/components/ui/button";
 
 export default function SignInPage() {
   const router = useRouter();
@@ -66,7 +67,7 @@ export default function SignInPage() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full mt-2 px-3 py-2 text-gray-600 bg-transparent border rounded-lg outline-none focus:border-indigo-600 shadow-sm transition duration-300"
+              className="w-full mt-2 px-3 py-2 text-gray-600 bg-transparent border rounded-lg outline-none focus:border-primary shadow-sm transition duration-300"
             />
           </div>
 
@@ -79,7 +80,7 @@ export default function SignInPage() {
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full mt-2 px-3 py-2 text-gray-600 bg-transparent border rounded-lg outline-none focus:border-indigo-600 shadow-sm transition duration-300"
+              className="w-full mt-2 px-3 py-2 text-gray-600 bg-transparent border rounded-lg outline-none focus:border-primary shadow-sm transition duration-300"
             />
           </div>
 
@@ -90,17 +91,9 @@ export default function SignInPage() {
           )}
 
           {/* Sign In Button */}
-          <button
-            type="submit"
-            disabled={isSigningIn}
-            className={`w-full px-4 py-2 text-white font-medium rounded-lg ${
-              isSigningIn
-                ? "bg-gray-300 cursor-not-allowed"
-                : "bg-indigo-600 hover:bg-indigo-700 hover:shadow-xl transition duration-300"
-            }`}
-          >
+          <Button type="submit" disabled={isSigningIn} className="w-full">
             {isSigningIn ? "Signing In..." : "Sign In"}
-          </button>
+          </Button>
         </form>
 
         <p className="text-center text-sm">
