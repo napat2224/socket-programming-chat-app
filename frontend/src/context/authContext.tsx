@@ -11,19 +11,21 @@ interface AuthContextType {
   name: string;
   profile: number;
   loading: boolean;
+  refreshUser: () => Promise<void>; // add this
 }
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
   name: "",
-  profile: 0,
+  profile: 1,
   loading: true,
+  refreshUser: async () => {},
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [name, setName] = useState("");
-  const [profile, setProfile] = useState(0);
+  const [profile, setProfile] = useState(1);
   const [loading, setLoading] = useState(true);
 
   const fetchUserData = async () => {
@@ -34,7 +36,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setProfile(userData?.profile || 0);
     } catch {
       setName("");
-      setProfile(0);
+      setProfile(1);
     }
   };
 
@@ -46,7 +48,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         await fetchUserData();
       } else {
         setName("");
-        setProfile(0);
+        setProfile(1);
       }
 
       setLoading(false);
@@ -56,7 +58,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, name, profile, loading }}>
+    <AuthContext.Provider
+      value={{ user, name, profile, loading, refreshUser: fetchUserData }}
+    >
       {children}
     </AuthContext.Provider>
   );
