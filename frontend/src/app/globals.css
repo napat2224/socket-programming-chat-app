@@ -4,7 +4,9 @@
   --background: #ffffff;
   --foreground: #171717;
   /* primary can be change */
-  --primary: #891224;
+  --primary: #d58793;
+  --secondary: #d09aa2;
+
   --neutral-black: #272932;
   --neutral-white: #F3F3F3;
 }
