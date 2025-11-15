@@ -3,6 +3,12 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  /* primary can be change */
+  --primary: #d58793;
+  --secondary: #d09aa2;
+
+  --neutral-black: #272932;
+  --neutral-white: #F3F3F3;
 }
 
 @theme inline {
@@ -10,6 +16,9 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --color-primary: var(--primary);
+  --color-neutral-black: var(--neutral-black);
+  --color-neutral-white: var(--neutral-white);
 }
 
 @media (prefers-color-scheme: dark) {

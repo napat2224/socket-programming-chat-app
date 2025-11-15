@@ -25,6 +25,6 @@ func LoadConfig() *Config {
 		MongoDBName:            dbName,
 		ChatCollectionName:     chatCollectionName,
 		RoomCollectionName:     roomCollectionName,
-		FirebaseAccountKeyFile: env.GetString("FIREBASE_KEY_PATH", "../../firebase-key.json"),
+		FirebaseAccountKeyFile: env.GetString("FIREBASE_KEY_PATH", "firebase-key.json"),
 	}
 }
