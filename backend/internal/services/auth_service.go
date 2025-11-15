@@ -17,7 +17,7 @@ type Claims struct {
 	UserID  string
 	Name    string
 	Email   string
-	Profile string
+	Profile int
 }
 
 func NewFirebaseAuth(client *auth.Client) *FirebaseAuth {
@@ -59,7 +59,7 @@ func (f *FirebaseAuth) VerifyIDToken(ctx context.Context, token string) (*Claims
 	}
 
 	// extract custom "profile" claim if set in Firebase
-	if profile, ok := t.Claims["profile"].(string); ok {
+	if profile, ok := t.Claims["profile"].(int); ok {
 		claims.Profile = profile
 	}
 

@@ -5,5 +5,5 @@ type UserModel struct {
 	UserID  string `bson:"user_id"`
 	Name    string `bson:"name"`
 	Email   string `bson:"email"`
-	Profile string `bson:"profile"`
+	Profile int `bson:"profile"`
 }
