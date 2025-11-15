@@ -15,9 +15,9 @@ import (
 	"github.com/napat2224/socket-programming-chat-app/internal/repository"
 	"github.com/napat2224/socket-programming-chat-app/internal/router"
 	"github.com/napat2224/socket-programming-chat-app/internal/services"
+	chatWs "github.com/napat2224/socket-programming-chat-app/internal/services/websocket"
 	"github.com/napat2224/socket-programming-chat-app/internal/utils/config"
 	"github.com/napat2224/socket-programming-chat-app/internal/utils/db"
-	chatWs "github.com/napat2224/socket-programming-chat-app/internal/services/websocket"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -96,7 +96,7 @@ func main() {
 	}
 
 	// Initialize repository
-	userRepo := repository.NewUserRepository(app.database, cfg.MongoDBName)
+	userRepo := repository.NewUserRepository(app.database, cfg.UserCollectionName)
 
 	// Initialize service here
 	authClient := services.InitFirebase(context.Background(), cfg.FirebaseAccountKeyFile)
