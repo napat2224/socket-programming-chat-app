@@ -6,7 +6,9 @@ import (
 	"encoding/json"
 	"io"
 	"log"
+	"math/rand"
 	"net/http"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/websocket/v2"
@@ -37,6 +39,98 @@ func NewChatWSHandler(hub *chatWs.Hub) *ChatWSHandler {
 
 func (h *ChatWSHandler) RegisterRoutes(app *fiber.App) {
 	app.Get("/ws/chat", websocket.New(h.handle))
+	app.Get("/ws/test", websocket.New(h.handleTest))
+}
+
+// TestMessage represents a random test message structure
+type TestMessage struct {
+	Timestamp   int64   `json:"timestamp"`
+	Message     string  `json:"message"`
+	RandomValue int     `json:"randomValue"`
+	IsTest      bool    `json:"isTest"`
+	UserID      string  `json:"userId"`
+	FloatValue  float64 `json:"floatValue"`
+}
+
+// handleTest is a test WebSocket handler that sends back random structs
+func (h *ChatWSHandler) handleTest(c *websocket.Conn) {
+	claims := c.Locals("claims").(*services.Claims)
+	userID := claims.UserID
+
+	log.Printf("[ws-test] User %s connected to test endpoint", userID)
+
+	// Send initial welcome message
+	welcomeMsg := TestMessage{
+		Timestamp:   time.Now().Unix(),
+		Message:     "Welcome to the test WebSocket!",
+		RandomValue: rand.Intn(1000),
+		IsTest:      true,
+		UserID:      userID,
+		FloatValue:  rand.Float64() * 100,
+	}
+
+	welcomeBytes, _ := json.Marshal(welcomeMsg)
+	if err := c.WriteMessage(websocket.TextMessage, welcomeBytes); err != nil {
+		log.Printf("[ws-test] Error sending welcome message: %v", err)
+		return
+	}
+
+	// Start sending random messages every 2 seconds
+	ticker := time.NewTicker(2 * time.Second)
+	defer ticker.Stop()
+
+	// Also listen for incoming messages
+	go func() {
+		for {
+			_, msg, err := c.ReadMessage()
+			if err != nil {
+				log.Printf("[ws-test] Read error: %v", err)
+				return
+			}
+			log.Printf("[ws-test] Received from %s: %s", userID, string(msg))
+
+			// Echo back with additional data
+			echoMsg := TestMessage{
+				Timestamp:   time.Now().Unix(),
+				Message:     "Echo: " + string(msg),
+				RandomValue: rand.Intn(1000),
+				IsTest:      true,
+				UserID:      userID,
+				FloatValue:  rand.Float64() * 100,
+			}
+			echoBytes, _ := json.Marshal(echoMsg)
+			_ = c.WriteMessage(websocket.TextMessage, echoBytes)
+		}
+	}()
+
+	// Send periodic random messages
+	messages := []string{
+		"Random test message",
+		"Testing WebSocket connection",
+		"Another random update",
+		"Periodic status check",
+		"Connection is working!",
+	}
+
+	for range ticker.C {
+		randomMsg := TestMessage{
+			Timestamp:   time.Now().Unix(),
+			Message:     messages[rand.Intn(len(messages))],
+			RandomValue: rand.Intn(1000),
+			IsTest:      true,
+			UserID:      userID,
+			FloatValue:  rand.Float64() * 100,
+		}
+
+		randomBytes, _ := json.Marshal(randomMsg)
+		if err := c.WriteMessage(websocket.TextMessage, randomBytes); err != nil {
+			log.Printf("[ws-test] Error sending message: %v", err)
+			break
+		}
+		log.Printf("[ws-test] Sent random message to %s", userID)
+	}
+
+	log.Printf("[ws-test] User %s disconnected from test endpoint", userID)
 }
 
 type wsMessage struct {
@@ -47,7 +141,8 @@ type wsMessage struct {
 }
 
 func (h *ChatWSHandler) handle(c *websocket.Conn) {
-	userID := c.Locals("claims").(services.Claims).UserID
+	claims := c.Locals("claims").(*services.Claims)
+	userID := claims.UserID
 
 	conn := chatWs.NewConnection(c)
 	h.hub.AddUser(userID, conn)
