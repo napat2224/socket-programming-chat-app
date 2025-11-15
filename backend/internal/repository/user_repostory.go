@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"log"
 
 	"github.com/napat2224/socket-programming-chat-app/internal/domain"
 	"github.com/napat2224/socket-programming-chat-app/internal/repository/models"
@@ -29,6 +30,8 @@ func (r *UserRepository) SaveUser(ctx context.Context, user domain.User) error {
 		Name:    user.Name,
 		Profile: user.Profile,
 	}
+
+	log.Printf("Saving user name %s, email %s, profile %d", model.Name, model.Email, model.Profile)
 
 	filter := bson.M{"user_id": model.UserID}
 	update := bson.M{"$set": model}

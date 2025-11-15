@@ -20,7 +20,7 @@ func NewUserService(authService *FirebaseAuth, repo *repository.UserRepository) 
 	return &UserService{authService: authService, repo: repo}
 }
 
-func (s *UserService) Register(ctx context.Context, idToken, fullName, role string) error {
+func (s *UserService) Register(ctx context.Context, idToken, name, profile string) error {
 	claims, err := s.authService.VerifyIDToken(ctx, idToken)
 	if err != nil {
 		return fmt.Errorf("invalid firebase token: %w", err)
@@ -28,19 +28,20 @@ func (s *UserService) Register(ctx context.Context, idToken, fullName, role stri
 
 	uid := claims.UserID
 	customClaims := map[string]interface{}{
-		"role": role,
+		"name":    name,
+		"profile": profile,
 	}
 
-	log.Printf("Setting custom claims for user %s: %v", uid, customClaims)
+	log.Printf("Setting custom claims for user %s: %v, name: %s, profile: %s", uid, customClaims, name, profile)
 	if err := s.authService.SetCustomUserClaims(ctx, uid, customClaims); err != nil {
 		return status.Errorf(codes.Internal, "failed to set custom claims: %v", err)
 	}
 
 	user := domain.User{
 		UserID:  claims.UserID,
-		Name: claims.Name,
+		Name:    name,
 		Email:   claims.Email,
-		Profile: claims.Profile,
+		Profile: profile,
 	}
 
 	return s.repo.SaveUser(ctx, user)

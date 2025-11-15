@@ -46,6 +46,7 @@ func (h *UserHandler) Register(c *fiber.Ctx) error {
 			Message: "Invalid request body",
 		})
 	}
+	log.Printf("name %s, profile %s", req.Name, req.Profile)
 
 	// Validate required fields
 	if req.IdToken == "" || req.Name == "" || req.Profile == "" {
@@ -54,6 +55,7 @@ func (h *UserHandler) Register(c *fiber.Ctx) error {
 			Message: "Missing required fields: idToken, fullName, and role are required",
 		})
 	}
+	log.Printf("name %s, profile %s", req.Name, req.Profile)
 
 	ctx := context.Background()
 	err := h.userService.Register(ctx, req.IdToken, req.Name, req.Profile)
