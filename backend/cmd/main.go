@@ -17,6 +17,7 @@ import (
 	"github.com/napat2224/socket-programming-chat-app/internal/services"
 	"github.com/napat2224/socket-programming-chat-app/internal/utils/config"
 	"github.com/napat2224/socket-programming-chat-app/internal/utils/db"
+	chatWs "github.com/napat2224/socket-programming-chat-app/internal/services/websocket"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -107,11 +108,14 @@ func main() {
 	chatHandler := handlers.NewChatHandler(chat)
 	authMid := middleware.NewAuthMiddleware(authService)
 
+	// ws hub
+	hub := chatWs.NewHub()
 	router.SetupRoutes(
 		app.app,
 		authMid,
 		userHandler,
 		chatHandler,
+		hub,
 	)
 
 	// Graceful shutdown

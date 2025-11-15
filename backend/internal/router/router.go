@@ -2,17 +2,19 @@
 package router
 
 import (
+	"github.com/gofiber/websocket/v2"
 	"github.com/gofiber/fiber/v2"
 	"github.com/napat2224/socket-programming-chat-app/internal/handlers"
 	"github.com/napat2224/socket-programming-chat-app/internal/middleware"
+	chatWs "github.com/napat2224/socket-programming-chat-app/internal/services/websocket"
 )
-
 
 func SetupRoutes(
 	app *fiber.App,
 	authMiddleware *middleware.AuthMiddleware,
 	userHandler *handlers.UserHandler,
 	chatHandler *handlers.ChatHandler,
+	hub *chatWs.Hub,
 ) {
 	app.Get("/health", func(c *fiber.Ctx) error {
 		return c.JSON(fiber.Map{"status": "healthy"})
@@ -22,8 +24,8 @@ func SetupRoutes(
 
 	setupUserRoutes(api, userHandler, authMiddleware)
 	setupTestRouter(api, authMiddleware)
+	setupWebsocketRoutes(app, hub, authMiddleware)
 }
-
 
 func setupUserRoutes(api fiber.Router, userHandler *handlers.UserHandler, authMiddleware *middleware.AuthMiddleware) {
 	// User routes
@@ -56,4 +58,16 @@ func setupTestRouter(api fiber.Router, authMiddleware *middleware.AuthMiddleware
 		})
 	})
 
+}
+
+func setupWebsocketRoutes(app *fiber.App, hub *chatWs.Hub, authMiddleware *middleware.AuthMiddleware) {
+	chatWsHandler := handlers.NewChatWSHandler(hub)
+
+	app.Use("/ws/chat", authMiddleware.AddClaims, func(c *fiber.Ctx) error {
+		if websocket.IsWebSocketUpgrade(c) {
+			return c.Next()
+		}
+		return fiber.ErrUpgradeRequired
+	})
+	chatWsHandler.RegisterRoutes(app)
 }
