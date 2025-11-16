@@ -34,6 +34,36 @@ export default function Home() {
 
   const router = useRouter();
 
+  const fetchPublicRooms = async () => {
+    try {
+      const token = await auth.currentUser?.getIdToken();
+      const apiUrl =
+        process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
+
+      const res = await fetch(`${apiUrl}/public-rooms`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const json = await res.json();
+
+      if (json.data) {
+        setRooms(
+          json.data.map((room: any) => ({
+            roomId: room.id,
+            createdBy: room.creatorId,
+            chatName: room.roomName,
+            userId: Array(room.memberNumber).fill("member"), // or leave it empty and fetch member list later
+            background: room.backgroundColor,
+          }))
+        );
+      }
+    } catch (err) {
+      console.error("Failed to load public rooms:", err);
+    }
+  };
+
   useEffect(() => {
     const connectWebSocket = async () => {
       try {
@@ -45,9 +75,12 @@ export default function Home() {
         }
 
         const token = await currentUser.getIdToken();
-        const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
-        const wsUrl = apiUrl.replace("http://", "ws://").replace("https://", "wss://");
-        
+        const apiUrl =
+          process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
+        const wsUrl = apiUrl
+          .replace("http://", "ws://")
+          .replace("https://", "wss://");
+
         // Connect to WebSocket with auth token (backend expects /ws endpoint)
         const ws = new WebSocket(`${wsUrl}/ws?token=${token}`);
 
@@ -55,42 +88,60 @@ export default function Home() {
           console.log("WebSocket connected");
           setIsConnected(true);
           wsRef.current = ws;
+
+          // Load all public rooms from backend
+          fetchPublicRooms();
         };
 
         ws.onmessage = (event) => {
           try {
             const message: WsMessage = JSON.parse(event.data);
             console.log("Received message:", message);
-            
+
             // Handle presence snapshot (initial list of online users)
             if (message.type === "presence_snapshot") {
-              const snapshotData = typeof message.data === "string" 
-                ? JSON.parse(message.data) 
-                : message.data;
-              
+              const snapshotData =
+                typeof message.data === "string"
+                  ? JSON.parse(message.data)
+                  : message.data;
+
               if (snapshotData.users && Array.isArray(snapshotData.users)) {
                 setOnlineUsers(snapshotData.users);
               }
             }
-            
+
             // Handle user presence updates (user going online/offline)
             if (message.type === "user_presence") {
-              const presenceData = typeof message.data === "string"
-                ? JSON.parse(message.data)
-                : message.data;
-              
+              const presenceData =
+                typeof message.data === "string"
+                  ? JSON.parse(message.data)
+                  : message.data;
+
               if (message.status === "online") {
                 // Add or update user in the list
                 setOnlineUsers((prev) => {
-                  const exists = prev.find((u) => u.userId === presenceData.userId);
+                  const exists = prev.find(
+                    (u) => u.userId === presenceData.userId
+                  );
                   if (exists) {
                     return prev.map((u) =>
                       u.userId === presenceData.userId
-                        ? { userId: presenceData.userId, name: presenceData.name, profile: presenceData.profile }
+                        ? {
+                            userId: presenceData.userId,
+                            name: presenceData.name,
+                            profile: presenceData.profile,
+                          }
                         : u
                     );
                   }
-                  return [...prev, { userId: presenceData.userId, name: presenceData.name, profile: presenceData.profile }];
+                  return [
+                    ...prev,
+                    {
+                      userId: presenceData.userId,
+                      name: presenceData.name,
+                      profile: presenceData.profile,
+                    },
+                  ];
                 });
               } else if (message.status === "offline") {
                 // Remove user from the list
@@ -99,15 +150,16 @@ export default function Home() {
                 );
               }
             }
-            
+
             // Handle room creation (broadcasted to all users)
             if (message.type === "create_room") {
-              const roomData = typeof message.data === "string"
-                ? JSON.parse(message.data)
-                : message.data;
-              
+              const roomData =
+                typeof message.data === "string"
+                  ? JSON.parse(message.data)
+                  : message.data;
+
               console.log("Room created/broadcasted:", roomData);
-              
+
               setRooms((prev) => {
                 // Check if room already exists (avoid duplicates)
                 const exists = prev.find((r) => r.roomId === roomData.roomId);
@@ -115,13 +167,16 @@ export default function Home() {
                   return prev;
                 }
                 // Add new room to the list
-                return [...prev, {
-                  roomId: roomData.roomId,
-                  createdBy: roomData.createdBy,
-                  chatName: roomData.chatName,
-                  userId: roomData.userId || [],
-                  background: roomData.background,
-                }];
+                return [
+                  ...prev,
+                  {
+                    roomId: roomData.roomId,
+                    createdBy: roomData.createdBy,
+                    chatName: roomData.chatName,
+                    userId: roomData.userId || [],
+                    background: roomData.background,
+                  },
+                ];
               });
             }
           } catch (error) {
@@ -184,7 +239,9 @@ export default function Home() {
       </div>
 
       {/* Online Users */}
-      <h2 className="text-lg font-semibold">Online user ({onlineUsers.length})</h2>
+      <h2 className="text-lg font-semibold">
+        Online user ({onlineUsers.length})
+      </h2>
       <div className="flex items-center gap-4 flex-wrap">
         {onlineUsers.length > 0 ? (
           onlineUsers.map((user) => (
@@ -203,9 +260,11 @@ export default function Home() {
 
       {/* Public Chat */}
       <div className="text-lg font-semibold mt-4">Public chat</div>
-      <button 
-        className="px-6 py-2 rounded-full bg-secondary text-neutral-white mb-4" 
-        onClick={() => { router.push("/home/create-room"); }}
+      <button
+        className="px-6 py-2 rounded-full bg-secondary text-neutral-white mb-4"
+        onClick={() => {
+          router.push("/home/create-room");
+        }}
       >
         Create New Room
       </button>
@@ -223,11 +282,14 @@ export default function Home() {
                   Members: {room.userId.length}
                 </span>
               </div>
-              <button 
+              <button
                 className="px-6 py-2 rounded-full bg-secondary text-neutral-white hover:bg-opacity-90 transition-all"
                 onClick={() => {
                   // Send join_room message via WebSocket
-                  if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+                  if (
+                    wsRef.current &&
+                    wsRef.current.readyState === WebSocket.OPEN
+                  ) {
                     const joinMessage = {
                       type: "join_room",
                       data: {
@@ -247,7 +309,9 @@ export default function Home() {
             </div>
           ))
         ) : (
-          <p className="text-sm text-neutral-black">No rooms available. Create one to get started!</p>
+          <p className="text-sm text-neutral-black">
+            No rooms available. Create one to get started!
+          </p>
         )}
       </div>
     </div>

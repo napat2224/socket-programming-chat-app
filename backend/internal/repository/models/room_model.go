@@ -35,7 +35,7 @@ func RoomToModel(room *domain.Room) (*RoomModel, error) {
 
 	// If ID is empty, use zero-value ObjectID (MongoDB will auto-generate on insert)
 	if room.ID == "" {
-		id = primitive.NilObjectID
+		id = primitive.NewObjectID()
 	} else {
 		id, err = primitive.ObjectIDFromHex(room.ID)
 		if err != nil {

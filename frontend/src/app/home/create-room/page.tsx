@@ -10,7 +10,17 @@ interface WsMessage {
   data: any;
 }
 
-type BackgroundColor = "red" | "blue" | "green" | "yellow" | "purple" | "pink" | "teal" | "orange" | "gray" | "black";
+type BackgroundColor =
+  | "red"
+  | "blue"
+  | "green"
+  | "yellow"
+  | "purple"
+  | "pink"
+  | "teal"
+  | "orange"
+  | "gray"
+  | "black";
 
 const BACKGROUND_COLORS: BackgroundColor[] = [
   "red",
@@ -44,9 +54,12 @@ export default function CreateRoom() {
         }
 
         const token = await currentUser.getIdToken();
-        const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
-        const wsUrl = apiUrl.replace("http://", "ws://").replace("https://", "wss://");
-        
+        const apiUrl =
+          process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
+        const wsUrl = apiUrl
+          .replace("http://", "ws://")
+          .replace("https://", "wss://");
+
         const ws = new WebSocket(`${wsUrl}/ws?token=${token}`);
 
         ws.onopen = () => {
@@ -59,13 +72,14 @@ export default function CreateRoom() {
           try {
             const message: WsMessage = JSON.parse(event.data);
             console.log("Received message:", message);
-            
+
             // Handle room creation success
             if (message.type === "create_room") {
-              const roomData = typeof message.data === "string"
-                ? JSON.parse(message.data)
-                : message.data;
-              
+              const roomData =
+                typeof message.data === "string"
+                  ? JSON.parse(message.data)
+                  : message.data;
+
               console.log("Room created:", roomData);
               setIsCreating(false);
               // Navigate back to home page after successful creation
@@ -114,7 +128,7 @@ export default function CreateRoom() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!roomName.trim()) {
       alert("Please enter a room name");
       return;
@@ -127,10 +141,8 @@ export default function CreateRoom() {
 
     setIsCreating(true);
 
-    // Send create_room message via WebSocket
-    // Backend expects WsMessage format: { type: "create_room", data: {...} }
     const createRoomData = {
-      roomId: "",
+      id: "1234",
       chatName: roomName.trim(),
       background: selectedColor,
     };
@@ -142,15 +154,12 @@ export default function CreateRoom() {
 
     try {
       wsRef.current.send(JSON.stringify(createRoomMessage));
-      // Note: We'll navigate on successful response in the onmessage handler
+      // Wait for WebSocket response before navigating or resetting isCreating
     } catch (error) {
       console.error("Error sending create room message:", error);
       alert("Failed to create room. Please try again.");
       setIsCreating(false);
     }
-    setIsCreating(false);
-    router.push("/home")
-
   };
 
   return (
@@ -178,7 +187,7 @@ export default function CreateRoom() {
       {/* Create Room Form */}
       <div className="max-w-2xl mx-auto w-full">
         <h1 className="text-2xl font-bold mb-6">Create New Room</h1>
-        
+
         <form onSubmit={handleSubmit} className="flex flex-col gap-6">
           {/* Room Name Input */}
           <div className="flex flex-col gap-2">
@@ -196,28 +205,6 @@ export default function CreateRoom() {
             />
           </div>
 
-          {/* Background Color Selection */}
-          {/* <div className="flex flex-col gap-2">
-            <label className="text-lg font-semibold">Background Color</label>
-            <div className="grid grid-cols-5 gap-4">
-              {BACKGROUND_COLORS.map((color) => (
-                <button
-                  key={color}
-                  type="button"
-                  onClick={() => setSelectedColor(color)}
-                  className={`h-16 rounded-xl border-4 transition-all ${
-                    selectedColor === color
-                      ? "border-neutral-white scale-110"
-                      : "border-transparent hover:border-gray-400"
-                  }`}
-                  style={{ backgroundColor: color }}
-                  disabled={isCreating || !isConnected}
-                  title={color}
-                />
-              ))}
-            </div>
-          </div> */}
-
           {/* Submit Button */}
           <button
             type="submit"
@@ -231,4 +218,3 @@ export default function CreateRoom() {
     </div>
   );
 }
-
