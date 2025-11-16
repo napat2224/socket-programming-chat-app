@@ -5,19 +5,22 @@ import { useState } from "react";
 
 interface Props {
     connected: boolean;
-    // sendMessage: (data: {
-    //     action: string;
-    //     type: string;
-    //     roomId: string;
-    //     content: string;
-    // }) => void;
+    sendMessage: (data: {
+        type: string;
+        status?: string;
+        data: {
+            content: string;
+            roomId: string;
+            replyContent?: string;
+        }
+    }) => void;
     roomId: string;
     theme: ThemeProps;
 }
 
 export default function MessagsInput ({
   connected,
-//   sendMessage,
+  sendMessage,
   roomId,
   theme
 }: Props) {
@@ -25,13 +28,14 @@ export default function MessagsInput ({
 
     // Handle sending a message
     const handleSendMessage = () => {
-        // if (!text.trim()) return;
-        // sendMessage({
-        //     action: "message",
-        //     type: "text",
-        //     roomId,
-        //     content: text,
-        // });
+        if (!text.trim()) return;
+        sendMessage({
+            type: "message",
+            data: {
+                content: text,
+                roomId: roomId,
+            }
+        });
         setText("");
     };
 

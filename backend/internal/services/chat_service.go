@@ -129,3 +129,32 @@ func (s *ChatService) AddReaction(
 func (s *ChatService) JoinRoom(ctx context.Context, roomID string, userID string) error {
 	return s.roomRepo.JoinRoom(ctx, roomID, userID)
 }
+
+func (s *ChatService) GetChatRoomByRoomID(ctx context.Context, roomID string) (*domain.Room, error) {
+	return s.roomRepo.GetChatRoomsByRoomID(ctx, roomID)
+}
+
+type UpdateBackgroundResponse struct {
+	BackgroundColor string `json:"backgroundColor"`
+}
+
+// func (s *ChatService) UpdateBackgroundRoom(ctx context.Context, roomID string, background string) (*UpdateBackgroundResponse, error) {
+// 	room, err := s.roomRepo.GetChatRoomsByRoomID(ctx, roomID)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	if room == nil {
+// 		return nil, fmt.Errorf("room not found")
+// 	}
+
+// 	room.BackgroundColor = BackgroundColor(background)
+
+// 	_, err = s.roomRepo.UpdateRoom(ctx, roomID, background)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	return &UpdateBackgroundResponse{
+// 		BackgroundColor: background,
+// 	}, nil
+// }
