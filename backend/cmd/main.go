@@ -18,6 +18,7 @@ import (
 	ws "github.com/napat2224/socket-programming-chat-app/internal/services/websocket"
 	"github.com/napat2224/socket-programming-chat-app/internal/utils/config"
 	"github.com/napat2224/socket-programming-chat-app/internal/utils/db"
+	"github.com/napat2224/socket-programming-chat-app/internal/utils/env"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -101,14 +102,14 @@ func main() {
 	messageRepo := repository.NewMongoMessageRepository(app.database, cfg.MassageCollectionName)
 
 	// Initialize service here
-	authClient := services.InitFirebase(context.Background(), cfg.FirebaseAccountKeyFile)
+	authClient := services.InitFirebase(context.Background(), env.GetString("FIREBASE_SERVICE_ACCOUNT_ENV", ""), cfg.FirebaseAccountKeyFile)
 	authService := services.NewFirebaseAuth(authClient)
 	userService := services.NewUserService(authService, userRepo)
 	userHandler := handlers.NewUserHandler(userService)
 
-	chat := services.NewChatService(roomRepo,messageRepo)
+	chat := services.NewChatService(roomRepo, messageRepo)
 	hub := ws.NewHub()
-	wsHandler := handlers.NewWsHandler(hub,chat)
+	wsHandler := handlers.NewWsHandler(hub, chat)
 	authMid := middleware.NewAuthMiddleware(authService)
 	chatHandler := handlers.NewChatHandler(chat)
 	// ws hub

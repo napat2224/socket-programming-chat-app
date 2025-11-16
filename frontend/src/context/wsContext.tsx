@@ -38,6 +38,9 @@ interface WebSocketContextType {
 
   // Subscribe to WebSocket messages (pages handle their own message types)
   addMessageHandler: (handler: MessageHandler) => () => void;
+
+  // Manually reconnect WebSocket (useful after registration)
+  reconnect: () => void;
 }
 
 const WebSocketContext = createContext<WebSocketContextType | null>(null);
@@ -194,9 +197,31 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
 
   useEffect(() => {
     // Wait for auth state to be ready
-    const unsubscribe = auth.onAuthStateChanged((currentUser) => {
+    const unsubscribe = auth.onAuthStateChanged(async (currentUser) => {
       if (currentUser) {
-        connectWebSocket();
+        try {
+          // Get token and check if user has completed registration (has custom claims)
+          const tokenResult = await currentUser.getIdTokenResult();
+          const hasName = tokenResult.claims.name;
+          const hasProfile = tokenResult.claims.profile;
+
+          // Only connect WebSocket if user has completed registration
+          if (hasName && hasProfile) {
+            connectWebSocket();
+          } else {
+            console.log(
+              "User hasn't completed registration yet, skipping WebSocket connection"
+            );
+            // Close existing connection if any
+            if (wsRef.current?.readyState === WebSocket.OPEN) {
+              wsRef.current.close();
+            }
+            setIsConnected(false);
+            setOnlineUsers([]);
+          }
+        } catch (error) {
+          console.error("Error checking user claims:", error);
+        }
       } else {
         // User logged out, close WebSocket
         if (wsRef.current?.readyState === WebSocket.OPEN) {
@@ -251,6 +276,7 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
     onlineUsers,
     sendMessage,
     addMessageHandler,
+    reconnect: connectWebSocket,
   };
 
   return (
