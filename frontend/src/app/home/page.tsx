@@ -221,100 +221,103 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="w-full min-h-screen bg-primary p-6 flex flex-col gap-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Chat Rooms</h1>
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <div
-              className={`w-3 h-3 rounded-full ${
-                isConnected ? "bg-green-500" : "bg-red-500"
-              }`}
-            ></div>
-            <span className="text-sm">
-              {isConnected ? "Connected" : "Disconnected"}
-            </span>
+    <>
+      <Navbar />
+      <div className="w-full min-h-screen bg-primary p-6 flex flex-col gap-6">
+        
+        <div className="flex justify-between items-center">
+          <h1 className="text-2xl font-bold">Chat Rooms</h1>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <div
+                className={`w-3 h-3 rounded-full ${
+                  isConnected ? "bg-green-500" : "bg-red-500"
+                }`}
+              ></div>
+              <span className="text-sm">
+                {isConnected ? "Connected" : "Disconnected"}
+              </span>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Online Users */}
-      <h2 className="text-lg font-semibold">
-        Online user ({onlineUsers.length})
-      </h2>
-      <div className="flex items-center gap-4 flex-wrap">
-        {onlineUsers.length > 0 ? (
-          onlineUsers.map((user) => (
-            <div
-              key={user.userId}
-              className="w-16 h-16 bg-neutral-white rounded-full shadow-md flex items-center justify-center text-xs text-neutral-black"
-              title={user.name}
-            >
-              {user.name}
-            </div>
-          ))
-        ) : (
-          <p className="text-sm text-neutral-black">No users online</p>
-        )}
-      </div>
-
-      {/* Public Chat */}
-      <div className="text-lg font-semibold mt-4">Public chat</div>
-      <button
-        className="px-6 py-2 rounded-full bg-secondary text-neutral-white mb-4"
-        onClick={() => {
-          router.push("/home/create-room");
-        }}
-      >
-        Create New Room
-      </button>
-      <div className="flex flex-col gap-4">
-        {rooms.length > 0 ? (
-          rooms.map((room) => (
-            <div
-              key={room.roomId}
-              className="w-full p-4 rounded-xl flex justify-between items-center shadow bg-neutral-white text-neutral-black"
-              style={{ borderLeft: `4px solid ${room.background}` }}
-            >
-              <div className="flex flex-col">
-                <span className="text-base font-semibold">{room.chatName}</span>
-                <span className="text-sm text-gray-500">
-                  Members: {room.userId.length}
-                </span>
-              </div>
-              <button
-                className="px-6 py-2 rounded-full bg-secondary text-neutral-white hover:bg-opacity-90 transition-all"
-                onClick={() => {
-                  // Send join_room message via WebSocket
-                  if (
-                    wsRef.current &&
-                    wsRef.current.readyState === WebSocket.OPEN
-                  ) {
-                    const joinMessage = {
-                      type: "join_room",
-                      data: {
-                        roomId: room.roomId,
-                        userId: "", // Backend will get userId from connection
-                      },
-                    };
-                    wsRef.current.send(JSON.stringify(joinMessage));
-                    console.log("Joining room:", room.roomId);
-                  } else {
-                    alert("WebSocket not connected. Please wait...");
-                  }
-                }}
+        {/* Online Users */}
+        <h2 className="text-lg font-semibold">
+          Online user ({onlineUsers.length})
+        </h2>
+        <div className="flex items-center gap-4 flex-wrap">
+          {onlineUsers.length > 0 ? (
+            onlineUsers.map((user) => (
+              <div
+                key={user.userId}
+                className="w-16 h-16 bg-neutral-white rounded-full shadow-md flex items-center justify-center text-xs text-neutral-black"
+                title={user.name}
               >
-                เข้าร่วม
-              </button>
-            </div>
-          ))
-        ) : (
-          <p className="text-sm text-neutral-black">
-            No rooms available. Create one to get started!
-          </p>
-        )}
+                {user.name}
+              </div>
+            ))
+          ) : (
+            <p className="text-sm text-neutral-black">No users online</p>
+          )}
+        </div>
+
+        {/* Public Chat */}
+        <div className="text-lg font-semibold mt-4">Public chat</div>
+        <button
+          className="px-6 py-2 rounded-full bg-secondary text-neutral-white mb-4"
+          onClick={() => {
+            router.push("/home/create-room");
+          }}
+        >
+          Create New Room
+        </button>
+        <div className="flex flex-col gap-4">
+          {rooms.length > 0 ? (
+            rooms.map((room) => (
+              <div
+                key={room.roomId}
+                className="w-full p-4 rounded-xl flex justify-between items-center shadow bg-neutral-white text-neutral-black"
+                style={{ borderLeft: `4px solid ${room.background}` }}
+              >
+                <div className="flex flex-col">
+                  <span className="text-base font-semibold">{room.chatName}</span>
+                  <span className="text-sm text-gray-500">
+                    Members: {room.userId.length}
+                  </span>
+                </div>
+                <button
+                  className="px-6 py-2 rounded-full bg-secondary text-neutral-white hover:bg-opacity-90 transition-all"
+                  onClick={() => {
+                    // Send join_room message via WebSocket
+                    if (
+                      wsRef.current &&
+                      wsRef.current.readyState === WebSocket.OPEN
+                    ) {
+                      const joinMessage = {
+                        type: "join_room",
+                        data: {
+                          roomId: room.roomId,
+                          userId: "", // Backend will get userId from connection
+                        },
+                      };
+                      wsRef.current.send(JSON.stringify(joinMessage));
+                      console.log("Joining room:", room.roomId);
+                    } else {
+                      alert("WebSocket not connected. Please wait...");
+                    }
+                  }}
+                >
+                  เข้าร่วม
+                </button>
+              </div>
+            ))
+          ) : (
+            <p className="text-sm text-neutral-black">
+              No rooms available. Create one to get started!
+            </p>
+          )}
+        </div>
       </div>
-    </div>
+    </>
   );
 }
