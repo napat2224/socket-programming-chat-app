@@ -140,3 +140,18 @@ func (r *RoomRepository) GetPrivateRoomByTargetID(ctx context.Context, currentUs
 
 	return room.ToDomain(), nil
 }
+
+func (r *RoomRepository) JoinRoom(ctx context.Context, roomID string, userID string) error {
+	objID, err := primitive.ObjectIDFromHex(roomID)
+	if err != nil {
+		return err
+	}
+
+	filter := bson.M{"_id": objID}
+	update := bson.M{"$push": bson.M{"member_ids": userID}}
+	_, err = r.collection.UpdateOne(ctx, filter, update)
+	if err != nil {
+		return err
+	}
+	return nil
+}

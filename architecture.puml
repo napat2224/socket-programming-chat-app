@@ -1,0 +1,171 @@
+@startuml Socket Programming Chat App Architecture
+
+skinparam componentStyle rectangle
+
+skinparam component {
+    BackgroundColor<<frontend>> LightBlue
+    BackgroundColor<<backend>> LightGreen
+    BackgroundColor<<service>> LightYellow
+    BackgroundColor<<database>> LightCoral
+    BackgroundColor<<external>> LightGray
+    BorderColor Black
+    ArrowColor Black
+}
+
+title Socket Programming Chat App - System Architecture
+
+' External Services
+cloud "Firebase Authentication" as Firebase <<external>>
+
+database "MongoDB" as MongoDB <<database>> {
+}
+
+' Frontend Layer
+package "Frontend (Next.js)" <<frontend>> {
+    component [Home Page] as HomePage
+    component [Sign In Page] as SignIn
+    component [Sign Up Page] as SignUp
+    component [Create Room Page] as CreateRoom
+    component [Auth Context] as AuthContext
+    component [React Query Cache] as ReactQuery
+    component [API Client (axios)] as APIClient
+    component [WebSocket Client] as WSClient
+    component [Firebase Auth Client] as FirebaseClient
+}
+
+' Backend Layer
+package "Backend (Go + Fiber)" <<backend>> {
+    component [main.go] as Main
+    component [HTTP Router] as Router
+    component [WebSocket Upgrade] as WSUpgrade
+    component [Auth Middleware] as AuthMiddleware
+    component [CORS Middleware] as CORS
+    component [User Handler] as UserHandler
+    component [Chat Handler] as ChatHandler
+    component [WebSocket Handler] as WSHandler
+    component [Auth Service] as AuthService
+    component [User Service] as UserService
+    component [Chat Service] as ChatService
+    component [WebSocket Hub] as Hub
+    component [User Repository] as UserRepo
+    component [Room Repository] as RoomRepo
+    component [Message Repository] as MessageRepo
+    component [User Entity] as UserEntity
+    component [Room Entity] as RoomEntity
+    component [Message Entity] as MessageEntity
+    component [Config] as Config
+    component [MongoDB Client] as MongoClient
+}
+
+' Frontend Internal Connections
+HomePage --> AuthContext
+HomePage --> WSClient
+HomePage --> ReactQuery
+SignIn --> FirebaseClient
+SignUp --> FirebaseClient
+CreateRoom --> APIClient
+AuthContext --> FirebaseClient
+APIClient --> ReactQuery
+
+' Frontend to Backend
+FirebaseClient --> Firebase : "Sign In/Sign Up"
+APIClient --> Router : "HTTP/REST API"
+WSClient --> WSUpgrade : "WebSocket Connection"
+
+' Backend Entry Point
+Main --> Config
+Main --> MongoClient
+Main --> Router
+Main --> CORS
+
+' Backend Router Flow
+Router --> AuthMiddleware
+Router --> CORS
+WSUpgrade --> AuthMiddleware
+
+' Backend Handlers
+AuthMiddleware --> UserHandler
+AuthMiddleware --> ChatHandler
+AuthMiddleware --> WSHandler
+
+' Backend Services
+UserHandler --> UserService
+ChatHandler --> ChatService
+WSHandler --> Hub
+WSHandler --> ChatService
+UserService --> AuthService
+Hub --> ChatService
+
+' Backend Repositories
+UserService --> UserRepo
+ChatService --> RoomRepo
+ChatService --> MessageRepo
+
+' Backend to Database
+UserRepo --> MongoDB
+RoomRepo --> MongoDB
+MessageRepo --> MongoDB
+
+' Backend to Domain
+UserRepo --> UserEntity
+RoomRepo --> RoomEntity
+MessageRepo --> MessageEntity
+
+' Backend to Firebase
+AuthService --> Firebase : "Verify Token"
+MongoClient --> MongoDB : "Connection"
+
+' Real-time Communication
+Hub ..> WSClient : "Broadcast"
+WSClient ..> Hub : "Send"
+
+note right of Firebase
+  Firebase Authentication
+  - User Management
+  - Token Generation
+  - Token Validation
+  - OAuth Providers
+end note
+
+note right of MongoDB
+  NoSQL Database
+  Collections:
+  - users
+  - rooms (public/private)
+  - messages
+end note
+
+note bottom of APIClient
+  Anti-Corruption Layer
+  - Token Injection
+  - Request/Response Transform
+  - Error Handling
+  - Retry on 401
+end note
+
+note bottom of Hub
+  WebSocket Hub
+  - Connection Management
+  - Room Management
+  - User Presence
+  - Real-time Broadcasting
+end note
+
+note bottom of AuthMiddleware
+  Firebase JWT Validation
+  Extracts User Claims
+  Protects Endpoints
+end note
+
+legend right
+  |<#LightBlue>   | Frontend Layer |
+  |<#LightGreen>   | Backend Layer |
+  |<#LightYellow>   | Service Layer |
+  |<#LightCoral>   | Database |
+  |<#LightGray>   | External Service |
+  
+  Solid arrows: Direct calls
+  Dotted arrows: Bidirectional
+endlegend
+
+@enduml
