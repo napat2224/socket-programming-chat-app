@@ -6,6 +6,7 @@ import { useAuth } from "@/context/authContext";
 import { useRouter } from "next/navigation";
 import { useWebSocket, WsMessage } from "@/context/wsContext";
 import Image from "next/image";
+import { avatars } from "@/types/avatar";
 
 interface Room {
   roomId: string;
@@ -136,14 +137,24 @@ export default function Home() {
           onlineUsers.map((user) => (
             <div
               key={user.userId}
-              className="w-16 h-16 bg-neutral-white rounded-full shadow-md flex items-center justify-center text-xs text-neutral-black"
               title={user.name}
-              onClick={() => {
-                handlePrivateChat(user.userId);
-              }}
+              className="flex flex-col text-center text-neutral-white"
             >
-              {/* <Image src={user.profile} /> */}
-              {user.name}
+              <div
+                className="w-30 h-30 bg-neutral-white rounded-full shadow-md flex items-center justify-center"
+                onClick={() => {
+                  handlePrivateChat(user.userId);
+                }}
+              >
+                <Image
+                  src={avatars[user.profile]}
+                  alt="Profile Avatar"
+                  width={200}
+                  height={200}
+                  className="rounded-full border shadow"
+                />
+              </div>
+              <div>{user.name}</div>
             </div>
           ))
         ) : (
