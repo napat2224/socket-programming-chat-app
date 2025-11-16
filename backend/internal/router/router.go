@@ -13,19 +13,21 @@ func SetupRoutes(
 	authMiddleware *middleware.AuthMiddleware,
 	userHandler *handlers.UserHandler,
 	wsHandler *handlers.WsHandler,
+	chatHandler *handlers.ChatHandler,
 ) {
 	app.Get("/health", func(c *fiber.Ctx) error {
 		return c.JSON(fiber.Map{"status": "healthy"})
 	})
 	app.Get(
 		"/ws",
-		authMiddleware.AddClaims,   
-		websocket.New(wsHandler.Handle), 
+		authMiddleware.AddClaims,
+		websocket.New(wsHandler.Handle),
 	)
 	api := app.Group("/api")
 
 	setupUserRoutes(api, userHandler, authMiddleware)
 	setupTestRouter(api, authMiddleware)
+	setupChatRoutes(api, chatHandler)
 	// setupWebsocketRoutes(app, hub, authMiddleware)
 }
 
@@ -36,10 +38,11 @@ func setupUserRoutes(api fiber.Router, userHandler *handlers.UserHandler, authMi
 	users.Get("/me", authMiddleware.AddClaims, userHandler.GetMe)
 }
 
-func SetupChatRoutes(api fiber.Router) {
+func setupChatRoutes(api fiber.Router, chatHandler *handlers.ChatHandler) {
 	// Uncomment once finishing implement chat handler
 
-	// chats := api.Group("/chats")
+	rooms := api.Group("/rooms")
+	rooms.Get("/public", chatHandler.GetPublicRooms)
 	// chats.Get("/:roomID/messages", r.authMiddleware.AddClaims, r.chatHandler.GetMessagesByRoomID)
 	// chats.Post("/rooms", r.authMiddleware.AddClaims, r.chatHandler.CreateRoom)
 	// chats.Get("/customer/rooms", r.authMiddleware.AddClaims, r.chatHandler.GetChatRoomsByCustomerID)

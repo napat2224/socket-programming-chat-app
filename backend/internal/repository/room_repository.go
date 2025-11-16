@@ -102,3 +102,40 @@ func (r *RoomRepository) GetChatRoomsByUserID(ctx context.Context, userID string
 	}
 	return domainRooms, nil
 }
+
+func (r *RoomRepository) GetAllPublicRooms(ctx context.Context) ([]*domain.Room, error) {
+	filter := bson.M{"is_public": true}
+	findOptions := options.Find().SetSort(bson.D{{Key: "created_at", Value: -1}}) // newest first
+	cursor, err := r.collection.Find(ctx, filter, findOptions)
+	if err != nil {
+		log.Printf("[GetAllPublicRooms] DB Find error: %v", err)
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var rooms []*models.RoomModel
+	if err := cursor.All(ctx, &rooms); err != nil {
+		log.Printf("[GetAllPublicRooms] Cursor.All error: %v", err)
+		return nil, err
+	}
+
+	var domainRooms []*domain.Room
+	for _, rm := range rooms {
+		domainRooms = append(domainRooms, rm.ToDomain())
+	}
+	return domainRooms, nil
+}
+
+func (r *RoomRepository) GetPrivateRoomByTargetID(ctx context.Context, currentUserID string, targetID string) (*domain.Room, error) {
+	filter := bson.M{"$or": []bson.M{
+		{"prophet_id": currentUserID, "customer_id": targetID},
+		{"prophet_id": targetID, "customer_id": currentUserID},
+	}}
+	room := models.RoomModel{}
+	err := r.collection.FindOne(ctx, filter).Decode(&room)
+	if err != nil {
+		return nil, err
+	}
+
+	return room.ToDomain(), nil
+}

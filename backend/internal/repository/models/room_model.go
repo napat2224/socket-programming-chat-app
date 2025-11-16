@@ -14,6 +14,7 @@ type RoomModel struct {
 	RoomName        string             `bson:"room_name,omitempty" json:"roomName,omitempty"`
 	BackgroundColor string             `bson:"background_color,omitempty" json:"backgroundColor,omitempty"`
 	LastMessageSent time.Time          `bson:"last_message_sent,omitempty" json:"lastMessageSent,omitempty"`
+	IsPublic        bool               `bson:"is_public" json:"isPublic"`
 }
 
 func (r *RoomModel) ToDomain() *domain.Room {
@@ -24,6 +25,7 @@ func (r *RoomModel) ToDomain() *domain.Room {
 		RoomName:        r.RoomName,
 		BackgroundColor: domain.BackgroundColor(r.BackgroundColor),
 		LastMessageSent: r.LastMessageSent,
+		IsPublic:        r.IsPublic,
 	}
 }
 
@@ -40,5 +42,6 @@ func RoomToModel(room *domain.Room) (*RoomModel, error) {
 		RoomName:        room.RoomName,
 		BackgroundColor: string(room.BackgroundColor),
 		LastMessageSent: room.LastMessageSent,
+		IsPublic:        room.IsPublic,
 	}, nil
 }

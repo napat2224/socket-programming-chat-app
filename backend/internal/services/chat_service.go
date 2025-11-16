@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/napat2224/socket-programming-chat-app/internal/domain"
@@ -29,6 +30,7 @@ func (s *ChatService) CreateRoom(
 	memberIDs []string,
 	roomName string,
 	background domain.BackgroundColor,
+	isPublic bool,
 ) (*domain.Room, error) {
 	if len(memberIDs) == 0 {
 		memberIDs = []string{creatorID}
@@ -41,6 +43,7 @@ func (s *ChatService) CreateRoom(
 		RoomName:        roomName,
 		BackgroundColor: background,
 		LastMessageSent: time.Time{},
+		IsPublic:        isPublic,
 	}
 
 	return s.roomRepo.SaveRoom(ctx, room)
@@ -84,4 +87,31 @@ func (s *ChatService) GetUserRooms(
 	userID string,
 ) ([]*domain.Room, error) {
 	return s.roomRepo.GetChatRoomsByUserID(ctx, userID)
+}
+
+func (s *ChatService) GetAllPublicRooms(ctx context.Context) ([]*domain.Room, error) {
+	return s.roomRepo.GetAllPublicRooms(ctx)
+}
+
+func (s *ChatService) GetPrivateRoomByTargetID(ctx context.Context, currentUserID string, targetID string) (*domain.Room, error) {
+	room, err := s.roomRepo.GetPrivateRoomByTargetID(ctx, currentUserID, targetID)
+	if err != nil {
+		return nil, err
+	}
+	if room == nil {
+		room = &domain.Room{
+			ID:              "",
+			CreatorID:       currentUserID,
+			MemberIDs:       []string{currentUserID, targetID},
+			RoomName:        fmt.Sprintf("%s and %s", currentUserID, targetID),
+			BackgroundColor: domain.ColorGray,
+			LastMessageSent: time.Time{},
+			IsPublic:        false, // create private room by default
+		}
+		room, err = s.roomRepo.SaveRoom(ctx, room)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return room, nil
 }

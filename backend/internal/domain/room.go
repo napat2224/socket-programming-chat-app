@@ -11,6 +11,7 @@ type Room struct {
 	RoomName        string          `json:"roomName,omitempty"`
 	BackgroundColor BackgroundColor `json:"backgroundColor,omitempty"`
 	LastMessageSent time.Time       `json:"lastMessageSent,omitempty"`
+	IsPublic        bool            `json:"isPublic,omitempty"`
 }
 
 type BackgroundColor string
@@ -28,7 +29,7 @@ const (
 	ColorBlack  BackgroundColor = "black"
 )
 
-func CreateRoom(id, creatorID, roomName, backgroundColor string, memberIDs []string, lastMessageSent time.Time) *Room {
+func CreateRoom(id, creatorID, roomName, backgroundColor string, memberIDs []string, lastMessageSent time.Time, isPublic bool) *Room {
 	return &Room{
 		ID:              id,
 		CreatorID:       creatorID,
@@ -36,5 +37,6 @@ func CreateRoom(id, creatorID, roomName, backgroundColor string, memberIDs []str
 		RoomName:        roomName,
 		BackgroundColor: BackgroundColor(backgroundColor),
 		LastMessageSent: lastMessageSent,
+		IsPublic:        isPublic,
 	}
 }
