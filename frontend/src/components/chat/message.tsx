@@ -6,6 +6,7 @@ import { CornerUpRight, SmilePlus } from "lucide-react";
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { avatars } from "@/types/avatar";
+import { MessageHandler, WsMessage } from "@/context/wsContext";
 
 export default function Message ({
     id,
@@ -18,10 +19,22 @@ export default function Message ({
     reactions,
     createdAt,
     theme,
-    userId
-}: MessageProps & { theme:ThemeProps, userId: string })
-{   
-    const [reaction, setReaction] = useState<string>("");
+    userId,
+    sendMessage,
+    addMessageHandler
+}: MessageProps & { 
+    theme:ThemeProps, 
+    userId: string,
+    sendMessage: (data:{
+        type: string,
+        data: {
+            messageId: string,
+            reactType: string,
+        }
+    }) => void
+    addMessageHandler: (handler: MessageHandler) => () => void,
+}) {   
+    const [currReactions, setCurrReactions] = useState<string[]>(reactions? reactions:[]);
     const [isReact, setIsReact] = useState<boolean>(false);
     const isMine = senderId === userId;
     const time = new Date(createdAt).toLocaleTimeString([], {
@@ -29,6 +42,19 @@ export default function Message ({
         minute: "2-digit",
         hour12: false,
     });
+
+    useEffect(() => {
+        const removeHandler = addMessageHandler((msg: WsMessage) => {
+            if (msg.type === "react_message") {
+                console.log("New react message:", msg.data);
+
+                if(msg.data.messageId === id)
+                    setCurrReactions((prev) => [...prev, msg.data.reactType])
+            }
+        });
+
+        return () => { removeHandler(); };
+    }, [addMessageHandler]);
 
     return (
         <div className={`w-full flex flex-col ${isMine? "items-end":"items-start"} gap-1 px-3 ${theme.text}`}>
@@ -69,7 +95,13 @@ export default function Message ({
                                 key={index} 
                                 className="w-12 h-12 rounded-full relative overflow-hidden hover:scale-110"
                                 onClick={() => {
-                                    setReaction(name)
+                                    sendMessage({
+                                        type: "react_message",
+                                        data: {
+                                            messageId: id,
+                                            reactType: name,
+                                        }
+                                    });
                                     setIsReact(false)
                                 }}>
                                 <Image
@@ -90,9 +122,9 @@ export default function Message ({
                 </div>
             </div>
 
-            {reactions && reactions.length > 0 &&
+            {currReactions && currReactions.length > 0 &&
             <div className={`flex px-2 py-1 items-center rounded-full bg-white ${isMine ? "justify-end" : "justify-start"}`}>
-                {reactions.slice(0,8).map((r, index) => (
+                {currReactions.slice(0,8).map((r, index) => (
                     <Image
                         key={index}
                         src={ReactionType[r]}
@@ -101,7 +133,7 @@ export default function Message ({
                         height={24}
                     />
                 ))}
-                {reactions.length > 8 && "... "}
+                {currReactions.length > 8 && "... "}
             </div>}
         </div>
     );

@@ -101,7 +101,7 @@ export default function Home() {
           typeof message.data === "string"
             ? JSON.parse(message.data)
             : message.data;
-        router.push(`/chat/group/${joinData.roomId}`);
+        router.push(`/chat/${joinData.roomId}`);
       }
     };
 
@@ -204,7 +204,7 @@ export default function Home() {
                   onClick={() => {
                     // PAGE-SPECIFIC: Already joined → go to chat directly (NO websocket)
                     if (room.isJoined) {
-                      router.push(`/chat/group/${room.roomId}`);
+                      router.push(`/chat/${room.roomId}`);
                       return;
                     }
 

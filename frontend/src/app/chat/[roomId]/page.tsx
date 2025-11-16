@@ -3,18 +3,39 @@ import Header from "@/components/chat/header";
 import MemberList, { MemberProps } from "@/components/chat/memberList";
 import Message from "@/components/chat/message";
 import MessageInput from "@/components/chat/messageInput";
-import { useWebSocket } from "@/context/wsContext";
+import { useWebSocket, WsMessage } from "@/context/wsContext";
 import { MessageProps } from "@/types/chat";
 import { chatThemes, ThemeProps } from "@/types/chatThemes";
 import { useParams } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function ChatRoomPage() {
-    const roomId = useParams();
+    const params = useParams<{ roomId: string }>();
+    const roomId = params.roomId;
     const { isConnected, sendMessage, addMessageHandler } = useWebSocket();
     const [theme, setTheme] = useState<ThemeProps>(chatThemes["1"]);
-    const messages: MessageProps[] = mockmessage;
+    const [messages, setMesssages] = useState<MessageProps[]>([]);
     const userId = "HVUHBTjrFqVV89zwziLqrQthFVz2";
+
+    // useEffect(() => {
+    //     sendMessage({
+    //         type: "join_room",
+    //         data: {
+    //             roomId: roomId
+    //         }
+    //     })
+    // }, []);
+
+    useEffect(() => {
+        const removeHandler = addMessageHandler((msg: WsMessage) => {
+            if (msg.type === "message") {
+                console.log("New chat message:", msg.data);
+                setMesssages((prev) => [...prev, msg.data])
+            }
+        });
+
+        return () => { removeHandler(); };
+    }, [addMessageHandler]);
 
     return (
         <div className="flex flex-col w-screen h-screen">
@@ -35,13 +56,15 @@ export default function ChatRoomPage() {
                         createdAt={m.createdAt}
                         theme={theme}
                         userId={userId}
+                        sendMessage={sendMessage}
+                        addMessageHandler={addMessageHandler}
                     />
                 ))}
             </div>
             <MessageInput 
                 connected={true}
                 sendMessage={sendMessage}
-                roomId={messages[0].roomId}
+                roomId={roomId}
                 theme={theme}
             />
         </div>
