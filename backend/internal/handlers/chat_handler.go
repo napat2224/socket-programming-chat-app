@@ -91,9 +91,63 @@ func (h *ChatHandler) GetPrivateRoomByTargetID(c *fiber.Ctx) error {
 		})
 	}
 	return c.JSON(fiber.Map{
-	"data": rooms,
-})
+		"data": rooms,
+	})
 }
+
+func (h *ChatHandler) GetChatRoomByRoomID(c *fiber.Ctx) error {
+	ctx := context.Background()
+	roomID := c.Params("roomID")
+	room, err := h.chatService.GetChatRoomByRoomID(ctx, roomID)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "failed to get chat room",
+		})
+	}
+	return c.JSON(fiber.Map{
+		"data": room,
+	})
+}
+
+func (h *ChatHandler) GetMessagesByRoomID(c *fiber.Ctx) error {
+	ctx := context.Background()
+	roomID := c.Params("roomID")
+	messages, error := h.chatService.GetRoomMessages(ctx, roomID)
+	if error != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "failed to get messages by roomID",
+		})
+	}
+	return c.JSON(fiber.Map{
+		"data": messages,
+	})
+}
+
+// func (h *ChatHandler) UpdateBackgroundRoom(c *fiber.Ctx) error {
+// 	ctx := context.Background()
+
+// 	roomID := c.Params("roomID")
+
+// 	type Body struct {
+// 		BackgroundColor string `json:"backgroundColor"`
+// 	}
+
+// 	var body Body
+// 	if err := c.BodyParser(&body); err != nil {
+// 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid request"})
+// 	}
+
+// 	resp, err := h.chatService.UpdateBackgroundRoom(ctx, roomID, body.BackgroundColor)
+// 	if err != nil {
+// 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+// 			"error": "failed to update room background",
+// 		})
+// 	}
+
+// 	return c.JSON(fiber.Map{
+// 		"backgroundColor": resp.BackgroundColor,
+// 	})
+// }
 
 // type ChatWSHandler struct {
 // 	hub            *chatWs.Hub

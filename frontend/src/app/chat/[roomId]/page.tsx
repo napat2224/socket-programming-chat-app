@@ -3,17 +3,18 @@ import Header from "@/components/chat/header";
 import MemberList, { MemberProps } from "@/components/chat/memberList";
 import Message from "@/components/chat/message";
 import MessageInput from "@/components/chat/messageInput";
+import { useWebSocket } from "@/context/wsContext";
 import { MessageProps } from "@/types/chat";
 import { chatThemes, ThemeProps } from "@/types/chatThemes";
+import { useParams } from "next/navigation";
 import { useState } from "react";
 
-export default function ChatGroupPage({
-    roomId,
-}: { roomId : string }) {
+export default function ChatRoomPage() {
+    const roomId = useParams();
+    const { isConnected, sendMessage, addMessageHandler } = useWebSocket();
     const [theme, setTheme] = useState<ThemeProps>(chatThemes["1"]);
     const messages: MessageProps[] = mockmessage;
-    const userId = "user-2";
-    const sendMessage = () => {};
+    const userId = "HVUHBTjrFqVV89zwziLqrQthFVz2";
 
     return (
         <div className="flex flex-col w-screen h-screen">
@@ -39,7 +40,7 @@ export default function ChatGroupPage({
             </div>
             <MessageInput 
                 connected={true}
-                // sendMessage={sendMessage}
+                sendMessage={sendMessage}
                 roomId={messages[0].roomId}
                 theme={theme}
             />
