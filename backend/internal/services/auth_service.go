@@ -2,7 +2,9 @@ package services
 
 import (
 	"context"
+	"encoding/base64"
 	"log"
+	"os"
 	"strconv"
 
 	firebase "firebase.google.com/go/v4"
@@ -25,17 +27,38 @@ func NewFirebaseAuth(client *auth.Client) *FirebaseAuth {
 	return &FirebaseAuth{client: client}
 }
 
-func InitFirebase(ctx context.Context, firebaseAccountKeyFile string) *auth.Client {
-	opt := option.WithCredentialsFile(firebaseAccountKeyFile)
+func InitFirebase(ctx context.Context, base64ServiceAccountEnv string, filePath string) *auth.Client {
+	var opt option.ClientOption
+
+	switch {
+	case base64ServiceAccountEnv != "":
+		decoded, err := base64.StdEncoding.DecodeString(base64ServiceAccountEnv)
+		if err != nil {
+			log.Fatalf("failed to decode firebase service account: %v", err)
+		}
+		opt = option.WithCredentialsJSON(decoded)
+
+	case filePath != "":
+		// Less safe, but useful for local dev
+		if _, err := os.Stat(filePath); err != nil {
+			log.Fatalf("firebase credential file not found at %s: %v", filePath, err)
+		}
+		opt = option.WithCredentialsFile(filePath)
+
+	default:
+		log.Fatal("no Firebase credentials provided: both Base64 env and file path are empty")
+	}
+
 	app, err := firebase.NewApp(ctx, nil, opt)
 	if err != nil {
-		log.Fatalf("error initializing app: %v", err)
+		log.Fatalf("error initializing firebase app: %v", err)
 	}
 
 	firebaseAuthClient, err := app.Auth(ctx)
 	if err != nil {
-		log.Fatalf("Failed to get firebaseAuthClient: %v", err)
+		log.Fatalf("failed to initialize firebase Auth client: %v", err)
 	}
+
 	return firebaseAuthClient
 }
 

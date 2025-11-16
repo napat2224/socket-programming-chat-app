@@ -1,23 +1,24 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback } from "react";
-import { auth } from "@/lib/firebase/firebase";
-import { useAuth } from "@/context/authContext";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useWebSocket, WsMessage } from "@/context/wsContext";
-
-interface WsMessage {
-  type: string;
-  status?: string;
-  data: any;
-}
+import { useAuth } from "@/context/authContext";
 
 export default function CreateRoom() {
   const [roomName, setRoomName] = useState("");
-  const [selectedColor, setSelectedColor] = useState<number>("0");
+  const [selectedColor, setSelectedColor] = useState<string>("blue");
   const { isConnected, sendMessage, addMessageHandler } = useWebSocket();
   const [isCreating, setIsCreating] = useState(false);
   const router = useRouter();
+
+  const { user, loading } = useAuth();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push("/signin");
+    }
+  }, [user, loading, router]);
 
   useEffect(() => {
     const handleMessage = (message: WsMessage) => {
@@ -72,8 +73,8 @@ export default function CreateRoom() {
   };
 
   return (
-    <div className="w-full min-h-screen bg-primary p-6 flex flex-col gap-6">
-      <div className="mt-15 flex items-center justify-between">
+    <div className="w-full min-h-screen bg-primary p-6 flex flex-col gap-6 mt-15">
+      <div className="flex items-center justify-between">
         <button
           onClick={() => router.push("/home")}
           className="px-4 py-2 rounded-full bg-neutral-white text-neutral-black hover:bg-gray-200"
