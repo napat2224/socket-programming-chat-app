@@ -13,15 +13,15 @@ type Room struct {
 	LastMessageSent time.Time       `json:"lastMessageSent,omitempty"`
 }
 
-type BackgroundColor int
+type BackgroundColor string
 
 const (
-	ColorRed    BackgroundColor = 1
-	ColorBlue   BackgroundColor = 2
-	ColorGreen  BackgroundColor = 3
-	ColorYellow BackgroundColor = 4
-	ColorPurple BackgroundColor = 5
-	ColorPink   BackgroundColor = 6
+	ColorRed    BackgroundColor = "1"
+	ColorBlue   BackgroundColor = "2"
+	ColorGreen  BackgroundColor = "3"
+	ColorYellow BackgroundColor = "4"
+	ColorPurple BackgroundColor = "5"
+	ColorPink   BackgroundColor = "6"
 )
 
 func CreateRoom(id, creatorID, roomName string, backgroundColor int, memberIDs []string, lastMessageSent time.Time) *Room {

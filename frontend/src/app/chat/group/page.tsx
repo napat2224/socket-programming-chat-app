@@ -9,7 +9,7 @@ import { useState } from "react";
 export default function ChatGroupPage({
     roomId,
 }: { roomId : string }) {
-    const [theme, setTheme] = useState<ThemeProps>(chatThemes[1]);
+    const [theme, setTheme] = useState<ThemeProps>(chatThemes["1"]);
     const messages: MessageProps[] = mockmessage;
     const userId = "user-2";
     const sendMessage = () => {};
@@ -111,7 +111,7 @@ const mockmessage:MessageProps[] = [
         senderId: "user-1",
         senderName: "John",
         content: "Hi everyoneeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
-        replyTo: null,
+        replyTo: "You นั่นแหละ",
         reactions: [],
         createdAt: "2025-11-16 07:00:00"
     },

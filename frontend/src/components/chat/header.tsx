@@ -52,7 +52,7 @@ export default function Header({
                         <button 
                             key={index}
                             className="w-12 h-12 rounded-full bg-white relative overflow-hidden hover:scale-95 border border-gray-200"
-                            onClick={() => setTheme(chatThemes[index+1])}
+                            onClick={() => setTheme(chatThemes[(index+1).toString()])}
                         >
                             <Image
                                 src={theme?.logo ?? ""}

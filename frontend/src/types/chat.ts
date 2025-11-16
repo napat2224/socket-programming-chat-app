@@ -10,9 +10,9 @@ export interface MessageProps {
 }
 
 export const ReactionType : Record<string, string> = {
-    "like":"",
-    "love":"",
-    "laugh":"",
-    "sad":"",
-    "angry":"",
+    "like":"/reacts/like.png",
+    "love":"/reacts/love.png",
+    "laugh":"/reacts/laugh.png",
+    "sad":"/reacts/sad.png",
+    "angry":"/reacts/angry.png",
 };

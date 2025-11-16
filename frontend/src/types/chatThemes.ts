@@ -9,8 +9,8 @@ export interface ThemeProps{
     sendButton: string;
 };
 
-export const chatThemes : Record<number,ThemeProps> = {
-    1 : {
+export const chatThemes : Record<string,ThemeProps> = {
+    "1" : {
         logo: "/themes/chart1.png",
         background: "bg-white",
         text: "text-black",
@@ -20,7 +20,7 @@ export const chatThemes : Record<number,ThemeProps> = {
         textRight: "text-white",
         sendButton: "black",
     },
-    2 : {
+    "2" : {
         logo: "/themes/chart2.png",
         background: "bg-[#F0C1E1]",
         text: "text-black",
@@ -30,7 +30,7 @@ export const chatThemes : Record<number,ThemeProps> = {
         textRight: "text-black",
         sendButton: "bg-[#CB9DF0]",
     },
-    3 : {
+    "3" : {
         logo: "/themes/chart3.png",
         background: "bg-[#003092]",
         text: "text-white",
@@ -40,7 +40,7 @@ export const chatThemes : Record<number,ThemeProps> = {
         textRight: "text-black",
         sendButton: "bg-[#FFF2DB]",
     },
-    4 : {
+    "4" : {
         logo: "/themes/chart4.png",
         background: "bg-[#F3F2EC]",
         text: "text-black",
@@ -50,7 +50,7 @@ export const chatThemes : Record<number,ThemeProps> = {
         textRight: "text-white",
         sendButton:"bg-[#DCDCDC]",
     }, 
-    5 : {
+    "5" : {
         logo: "/themes/chart5.png",
         background: "bg-[#8CE4FF]",
         text: "text-black",
@@ -60,7 +60,7 @@ export const chatThemes : Record<number,ThemeProps> = {
         textRight: "text-black",
         sendButton:"bg-[#FF5656]",
     },
-    6 : {
+    "6" : {
         logo: "/themes/chart6.png",
         background: "bg-[#F72C5B]",
         text: "text-white",
