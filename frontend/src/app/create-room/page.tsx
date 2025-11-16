@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useWebSocket, WsMessage } from "@/context/wsContext";
+import { useAuth } from "@/context/authContext";
 
 export default function CreateRoom() {
   const [roomName, setRoomName] = useState("");
@@ -10,6 +11,14 @@ export default function CreateRoom() {
   const { isConnected, sendMessage, addMessageHandler } = useWebSocket();
   const [isCreating, setIsCreating] = useState(false);
   const router = useRouter();
+
+  const { user } = useAuth();
+
+  useEffect(() => {
+    if (!user) {
+      router.push("/signin");
+    }
+  }, [user, router]);
 
   useEffect(() => {
     const handleMessage = (message: WsMessage) => {
