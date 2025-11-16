@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { avatars } from "@/types/avatar";
 import { useAuth } from "@/context/authContext";
+import axios from "axios";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -38,6 +39,36 @@ export default function RegisterPage() {
     setError("");
 
     try {
+      try {
+        const { data } = await api.post<{
+          available: boolean;
+          message?: string;
+        }>("/api/users/check-name", {
+          name: name.trim(),
+        });
+
+        if (!data.available) {
+          setError(data.message || "This username is already taken");
+          setLoading(false);
+          return;
+        }
+      } catch (err) {
+        if (axios.isAxiosError(err) && err.response) {
+          const data = err.response.data as {
+            available?: boolean;
+            message?: string;
+          };
+
+          if (data && data.available === false) {
+            setError(data.message || "This username is already taken");
+            setLoading(false);
+            return;
+          }
+        }
+        setError("Failed to check username availability, please try again");
+        setLoading(false);
+        return;
+      }
       // Step 1: Create Firebase user
       const cred = await doCreateUserWithEmailAndPassword(email, password);
 
