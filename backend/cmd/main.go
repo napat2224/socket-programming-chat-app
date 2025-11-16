@@ -110,13 +110,14 @@ func main() {
 	hub := ws.NewHub()
 	wsHandler := handlers.NewWsHandler(hub,chat)
 	authMid := middleware.NewAuthMiddleware(authService)
-
+	chatHandler := handlers.NewChatHandler(chat)
 	// ws hub
 	router.SetupRoutes(
 		app.app,
 		authMid,
 		userHandler,
 		wsHandler,
+		chatHandler,
 	)
 
 	// Graceful shutdown
