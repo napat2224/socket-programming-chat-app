@@ -29,7 +29,7 @@ export default function CreateRoom() {
             : message.data;
         console.log("Room created:", roomData);
         setIsCreating(false);
-        router.push("/home"); // navigate after successful creation
+        router.push("/"); // navigate after successful creation
       }
     };
 
@@ -76,7 +76,7 @@ export default function CreateRoom() {
     <div className="w-full min-h-screen bg-primary p-6 flex flex-col gap-6 mt-15">
       <div className="flex items-center justify-between">
         <button
-          onClick={() => router.push("/home")}
+          onClick={() => router.push("/")}
           className="px-4 py-2 rounded-full bg-neutral-white text-neutral-black hover:bg-gray-200"
         >
           ← Back
