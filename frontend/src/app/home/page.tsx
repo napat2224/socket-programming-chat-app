@@ -40,7 +40,7 @@ export default function Home() {
       const apiUrl =
         process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
 
-      const res = await fetch(`${apiUrl}/public-rooms`, {
+      const res = await fetch(`${apiUrl}/api/rooms/public`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
