@@ -53,6 +53,37 @@ export default function Home() {
     }
   }, []);
 
+  const handlePrivateChat = async (targetUserId: string) => {
+    try {
+      const token = await auth.currentUser?.getIdToken();
+      const currentUser = auth.currentUser?.uid;
+      if (!currentUser) return;
+
+      const apiUrl =
+        process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
+
+      // Call backend to get or create private room
+      const res = await fetch(`${apiUrl}/api/rooms/private/${targetUserId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to fetch private room");
+      }
+
+      const json = await res.json();
+      const roomId = json.data.id; // assuming your API returns { data: { id: string, ... } }
+
+      // Navigate to chat
+      router.push(`/chat/private/${roomId}`);
+    } catch (error) {
+      console.error("Error opening private chat:", error);
+      alert("Failed to open private chat. Please try again.");
+    }
+  };
+
   useEffect(() => {
     // PAGE-SPECIFIC: Handle join_room messages
     const handleMessage = (message: WsMessage) => {
@@ -61,7 +92,7 @@ export default function Home() {
           typeof message.data === "string"
             ? JSON.parse(message.data)
             : message.data;
-        router.push(`/chat/${joinData.roomId}`);
+        router.push(`/chat/group/${joinData.roomId}`);
       }
     };
 
@@ -106,6 +137,9 @@ export default function Home() {
               key={user.userId}
               className="w-16 h-16 bg-neutral-white rounded-full shadow-md flex items-center justify-center text-xs text-neutral-black"
               title={user.name}
+              onClick={() => {
+                handlePrivateChat(user.userId);
+              }}
             >
               {user.name}
             </div>
@@ -147,7 +181,7 @@ export default function Home() {
                 onClick={() => {
                   // PAGE-SPECIFIC: Already joined → go to chat directly (NO websocket)
                   if (room.isJoined) {
-                    router.push(`/chat/${room.roomId}`);
+                    router.push(`/chat/group/${room.roomId}`);
                     return;
                   }
 
