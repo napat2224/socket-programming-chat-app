@@ -17,6 +17,7 @@ interface Room {
   chatName: string;
   userId: string[];
   background: string;
+  isJoined: boolean;
 }
 
 interface WsMessage {
@@ -56,6 +57,7 @@ export default function Home() {
             chatName: room.roomName,
             userId: Array(room.memberNumber).fill("member"), // or leave it empty and fetch member list later
             background: room.backgroundColor,
+            isJoined: room.isJoined,
           }))
         );
       }
@@ -151,33 +153,18 @@ export default function Home() {
               }
             }
 
-            // Handle room creation (broadcasted to all users)
-            if (message.type === "create_room") {
-              const roomData =
+            if (message.type === "join_room") {
+              const joinData =
                 typeof message.data === "string"
                   ? JSON.parse(message.data)
                   : message.data;
 
-              console.log("Room created/broadcasted:", roomData);
-
-              setRooms((prev) => {
-                // Check if room already exists (avoid duplicates)
-                const exists = prev.find((r) => r.roomId === roomData.roomId);
-                if (exists) {
-                  return prev;
-                }
-                // Add new room to the list
-                return [
-                  ...prev,
-                  {
-                    roomId: roomData.roomId,
-                    createdBy: roomData.createdBy,
-                    chatName: roomData.chatName,
-                    userId: roomData.userId || [],
-                    background: roomData.background,
-                  },
-                ];
-              });
+              setRooms((prev) =>
+                prev.map((r) =>
+                  r.roomId === joinData.roomId ? { ...r, isJoined: true } : r
+                )
+              );
+              router.push(`/chat/${joinData.roomId}`);
             }
           } catch (error) {
             console.error("Error parsing message:", error);
@@ -274,7 +261,6 @@ export default function Home() {
             <div
               key={room.roomId}
               className="w-full p-4 rounded-xl flex justify-between items-center shadow bg-neutral-white text-neutral-black"
-              style={{ borderLeft: `4px solid ${room.background}` }}
             >
               <div className="flex flex-col">
                 <span className="text-base font-semibold">{room.chatName}</span>
@@ -282,29 +268,45 @@ export default function Home() {
                   Members: {room.userId.length}
                 </span>
               </div>
+              {room.isJoined && (
+                <span className="text-green-600 text-xs mt-1 font-semibold">
+                  ✔ Joined
+                </span>
+              )}
               <button
-                className="px-6 py-2 rounded-full bg-secondary text-neutral-white hover:bg-opacity-90 transition-all"
+                className={`px-6 py-2 rounded-full text-neutral-white transition-all ${
+                  room.isJoined
+                    ? "bg-green-700 hover:bg-green-800"
+                    : "bg-secondary hover:bg-opacity-90"
+                }`}
                 onClick={() => {
-                  // Send join_room message via WebSocket
-                  if (
-                    wsRef.current &&
-                    wsRef.current.readyState === WebSocket.OPEN
-                  ) {
-                    const joinMessage = {
-                      type: "join_room",
-                      data: {
-                        roomId: room.roomId,
-                        userId: "", // Backend will get userId from connection
-                      },
-                    };
-                    wsRef.current.send(JSON.stringify(joinMessage));
-                    console.log("Joining room:", room.roomId);
-                  } else {
+                  // Already joined → go to chat directly (NO websocket)
+                  if (room.isJoined) {
+                    router.push(`/chat/${room.roomId}`);
+                    return;
+                  }
+
+                  // Not joined → send join websocket
+                  if (!wsRef.current) return;
+                  if (wsRef.current.readyState !== WebSocket.OPEN) {
                     alert("WebSocket not connected. Please wait...");
+                    return;
+                  }
+
+                  try {
+                    wsRef.current.send(
+                      JSON.stringify({
+                        type: "join_room",
+                        data: { roomId: room.roomId },
+                      })
+                    );
+                  } catch (error) {
+                    console.error("Error sending join room message:", error);
+                    alert("Failed to join room. Please try again.");
                   }
                 }}
               >
-                เข้าร่วม
+                {room.isJoined ? "Enter Chat" : "Join"}
               </button>
             </div>
           ))
