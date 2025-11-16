@@ -125,3 +125,7 @@ func (s *ChatService) AddReaction(
 ) (*domain.Message, error) {
 	return s.messageRepo.AddReaction(ctx, messageID, reaction)
 }
+
+func (s *ChatService) JoinRoom(ctx context.Context, roomID string, userID string) error {
+	return s.roomRepo.JoinRoom(ctx, roomID, userID)
+}
