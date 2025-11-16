@@ -13,15 +13,31 @@ import (
 type ChatService struct {
 	roomRepo    *repository.RoomRepository
 	messageRepo *repository.MessageRepository
+	userRepo *repository.UserRepository
+}
+
+
+type RoomMember struct {
+	ID      string              `json:"id"`
+	Name    string              `json:"name"`
+	Profile domain.ProfileType  `json:"profile"`
+}
+
+type RoomDetail struct {
+	RoomID   string        `json:"roomId"`
+	RoomName string        `json:"roomName"`
+	Members  []RoomMember  `json:"members"`
 }
 
 func NewChatService(
 	roomRepo *repository.RoomRepository,
 	messageRepo *repository.MessageRepository,
+	userRepo *repository.UserRepository,
 ) *ChatService {
 	return &ChatService{
 		roomRepo:    roomRepo,
 		messageRepo: messageRepo,
+		userRepo: userRepo,
 	}
 }
 
@@ -130,9 +146,36 @@ func (s *ChatService) JoinRoom(ctx context.Context, roomID string, userID string
 	return s.roomRepo.JoinRoom(ctx, roomID, userID)
 }
 
-func (s *ChatService) GetChatRoomByRoomID(ctx context.Context, roomID string) (*domain.Room, error) {
-	return s.roomRepo.GetChatRoomsByRoomID(ctx, roomID)
+func (s *ChatService) GetChatRoomByRoomID(
+    ctx context.Context,
+    roomID string,
+) (*RoomDetail, error) {
+    room, err := s.roomRepo.GetChatRoomsByRoomID(ctx, roomID)
+    if err != nil {
+        return nil, err
+    }
+
+    users, err := s.userRepo.GetUsersByIDs(ctx, room.MemberIDs)
+    if err != nil {
+        return nil, err
+    }
+
+    members := make([]RoomMember, 0, len(users))
+    for _, u := range users {
+        members = append(members, RoomMember{
+            ID:      u.UserID,
+            Name:    u.Name,
+            Profile: u.Profile,
+        })
+    }
+
+    return &RoomDetail{
+        RoomID:   room.ID,
+        RoomName: room.RoomName,
+        Members:  members,
+    }, nil
 }
+
 
 type UpdateBackgroundResponse struct {
 	BackgroundColor string `json:"backgroundColor"`

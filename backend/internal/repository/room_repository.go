@@ -157,10 +157,15 @@ func (r *RoomRepository) JoinRoom(ctx context.Context, roomID string, userID str
 }
 
 func (r *RoomRepository) GetChatRoomsByRoomID(ctx context.Context, roomID string) (*domain.Room, error) {
-	filter := bson.M{"id": roomID}
+    oid, err := primitive.ObjectIDFromHex(roomID)
+    if err != nil {
+        return nil, err
+    }
 
-	room := models.RoomModel{}
-	err := r.collection.FindOne(ctx, filter).Decode(&room)
+    filter := bson.M{"_id": oid}
+
+    var room models.RoomModel
+    err = r.collection.FindOne(ctx, filter).Decode(&room)
 	if err != nil {
 		return nil, err
 	}
