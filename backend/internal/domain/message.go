@@ -17,11 +17,9 @@ type Message struct {
 type ReactionType string
 
 const (
-	ReactionLike  ReactionType = "like"
-	ReactionLove  ReactionType = "love"
-	ReactionLaugh ReactionType = "laugh"
-	ReactionSad   ReactionType = "sad"
-	ReactionAngry ReactionType = "angry"
+	ReactionLike  ReactionType = "1"
+	ReactionDislike  ReactionType = "2"
+	ReactionLove ReactionType = "3"
 )
 
 func CreateMessage(messageID, roomID, senderID, content, replyTo string, reactions []ReactionType, createdAt time.Time) *Message {
