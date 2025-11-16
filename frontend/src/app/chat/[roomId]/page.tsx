@@ -15,6 +15,7 @@ export default function ChatRoomPage() {
     const { isConnected, sendMessage, addMessageHandler } = useWebSocket();
     const [theme, setTheme] = useState<ThemeProps>(chatThemes["1"]);
     const [messages, setMesssages] = useState<MessageProps[]>([]);
+    const [isReply, setIsReply] = useState("");
     const userId = "HVUHBTjrFqVV89zwziLqrQthFVz2";
 
   useEffect(() => {
