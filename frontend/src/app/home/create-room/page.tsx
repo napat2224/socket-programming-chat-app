@@ -64,8 +64,8 @@ export default function CreateRoom() {
   };
 
   return (
-    <div className="w-full min-h-screen bg-primary p-6 flex flex-col gap-6">
-      <div className="mt-15 flex items-center justify-between">
+    <div className="w-full min-h-screen bg-primary p-6 flex flex-col gap-6 mt-15">
+      <div className="flex items-center justify-between">
         <button
           onClick={() => router.push("/home")}
           className="px-4 py-2 rounded-full bg-neutral-white text-neutral-black hover:bg-gray-200"

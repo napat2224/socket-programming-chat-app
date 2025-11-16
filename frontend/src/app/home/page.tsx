@@ -113,7 +113,7 @@ export default function Home() {
   return (
     <>
       <Navbar />
-      <div className="w-full min-h-screen bg-primary p-6 flex flex-col gap-6">
+      <div className="w-full min-h-screen bg-primary p-6 flex flex-col gap-6 mt-15">
         <div className="flex justify-between items-center">
           <h1 className="text-2xl font-bold">Chat Rooms</h1>
           <div className="flex items-center gap-4">
@@ -182,7 +182,9 @@ export default function Home() {
                 className="w-full p-4 rounded-xl flex justify-between items-center shadow bg-neutral-white text-neutral-black"
               >
                 <div className="flex flex-col">
-                  <span className="text-base font-semibold">{room.chatName}</span>
+                  <span className="text-base font-semibold">
+                    {room.chatName}
+                  </span>
                   <span className="text-sm text-gray-500">
                     Members: {room.userId.length}
                   </span>
