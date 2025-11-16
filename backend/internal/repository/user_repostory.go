@@ -69,3 +69,22 @@ func (r *UserRepository) Update(ctx context.Context, userID string, update map[s
 	}
 	return r.FindById(ctx, userID)
 }
+
+func (r *UserRepository) FindByName(ctx context.Context, name string) (*domain.User, error) {
+	var userModel models.UserModel
+
+	err := r.collection.FindOne(ctx, bson.M{"name": name}).Decode(&userModel)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return &domain.User{
+		UserID:  userModel.UserID,
+		Email:   userModel.Email,
+		Name:    userModel.Name,
+		Profile: domain.ProfileType(userModel.Profile),
+	}, nil
+}
