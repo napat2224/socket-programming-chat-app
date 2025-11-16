@@ -103,7 +103,7 @@ func (s *ChatService) GetPrivateRoomByTargetID(ctx context.Context, currentUserI
 			CreatorID:       currentUserID,
 			MemberIDs:       []string{currentUserID, targetID},
 			RoomName:        fmt.Sprintf("%s and %s", currentUserID, targetID),
-			BackgroundColor: domain.ColorGray,
+			BackgroundColor: domain.ColorBlue,
 			LastMessageSent: time.Time{},
 			IsPublic:        false, // create private room by default
 		}
