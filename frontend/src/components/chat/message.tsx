@@ -6,7 +6,7 @@ import { CornerUpRight, SmilePlus } from "lucide-react";
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { avatars } from "@/types/avatar";
-import { MessageHandler, WsMessage } from "@/context/wsContext";
+import { useWebSocket, WsMessage } from "@/context/wsContext";
 
 export default function Message ({
     id,
@@ -20,20 +20,15 @@ export default function Message ({
     createdAt,
     theme,
     userId,
-    sendMessage,
-    addMessageHandler
+    isReply,
+    setIsReply
 }: MessageProps & { 
     theme:ThemeProps, 
     userId: string,
-    sendMessage: (data:{
-        type: string,
-        data: {
-            messageId: string,
-            reactType: string,
-        }
-    }) => void
-    addMessageHandler: (handler: MessageHandler) => () => void,
+    isReply: string,
+    setIsReply: (data:any) => void
 }) {   
+    const { sendMessage, addMessageHandler } = useWebSocket();
     const [currReactions, setCurrReactions] = useState<string[]>(reactions? reactions:[]);
     const [isReact, setIsReact] = useState<boolean>(false);
     const isMine = senderId === userId;
@@ -44,15 +39,26 @@ export default function Message ({
     });
 
     useEffect(() => {
+        sendMessage({
+            type: "join_room",
+            data: {
+                roomId: roomId
+            }
+        })
+    }, []);
+
+
+    useEffect(() => {
         const removeHandler = addMessageHandler((msg: WsMessage) => {
             if (msg.type === "react_message") {
                 console.log("New react message:", msg.data);
 
-                if(msg.data.messageId === id)
+                if(msg.data.messageId === id) {
                     setCurrReactions((prev) => [...prev, msg.data.reactType])
+                }
             }
         });
-
+        
         return () => { removeHandler(); };
     }, [addMessageHandler]);
 
@@ -84,7 +90,8 @@ export default function Message ({
             <div className={`max-w-full shrink flex gap-2 ${isMine? "justify-end":"justify-start"} group`}>
                 <div className={`relative max-w-[80%] shrink h-full px-4 py-2 rounded-2xl 
                     ${theme.shadow} text-base wrap-break-word whitespace-pre-wrap
-                    ${isMine? `order-2 ${theme.right} ${theme.textRight}`:`${theme.left} ${theme.textLeft}`}`}>
+                    ${isMine? `order-2 ${theme.right} ${theme.textRight}`:`${theme.left} ${theme.textLeft}`}`}
+                    onDoubleClick={() => setIsReply(isReply===""? content:"")}>
                     {content}
 
                     {isReact && 

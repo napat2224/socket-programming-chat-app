@@ -15,22 +15,39 @@ export default function ChatRoomPage() {
     const { isConnected, sendMessage, addMessageHandler } = useWebSocket();
     const [theme, setTheme] = useState<ThemeProps>(chatThemes["1"]);
     const [messages, setMesssages] = useState<MessageProps[]>([]);
+    const [isReply, setIsReply] = useState("");
     const userId = "HVUHBTjrFqVV89zwziLqrQthFVz2";
 
-    // useEffect(() => {
-    //     sendMessage({
-    //         type: "join_room",
-    //         data: {
-    //             roomId: roomId
-    //         }
-    //     })
-    // }, []);
+    useEffect(() => {
+        sendMessage({
+            type: "join_room",
+            data: {
+                roomId: roomId
+            }
+        })
+    }, []);
 
     useEffect(() => {
         const removeHandler = addMessageHandler((msg: WsMessage) => {
             if (msg.type === "message") {
                 console.log("New chat message:", msg.data);
-                setMesssages((prev) => [...prev, msg.data])
+                const newMessage = msg.data;
+                setMesssages((prev) => [
+                    ...prev,
+                    {
+                        id: newMessage.messageId,
+                        roomId: newMessage.roomId,
+                        senderId: newMessage.senderId,
+                        senderProfile: newMessage.senderProfile,
+                        senderName: newMessage.senderName,
+                        content: newMessage.content,
+                        replyTo: newMessage.replyContent ?? "",
+                        reactions: newMessage.reactions ?? [],
+                        createdAt: newMessage.createdAt,
+                    },
+                ]);
+
+
             }
         });
 
@@ -42,10 +59,10 @@ export default function ChatRoomPage() {
             <Header username="Tungmay" setTheme={setTheme}/>
             <MemberList memberList={mockmemberlist}className={`${theme.sendButton} ${theme.text}`}/>
             <div className={`flex-1 flex flex-col w-full pt-4 gap-1 overflow-y-scroll ${theme.background}`}>
-                {messages.map((m, index) => (
-                    <Message
+                {messages.map((m, index) => {
+                    return <Message
                         key={index}
-                        id={m.id}
+                        id={m.id ?? m.messageId}
                         roomId={m.roomId}
                         senderId={m.senderId}
                         senderProfile={m.senderProfile}
@@ -56,16 +73,17 @@ export default function ChatRoomPage() {
                         createdAt={m.createdAt}
                         theme={theme}
                         userId={userId}
-                        sendMessage={sendMessage}
-                        addMessageHandler={addMessageHandler}
+                        isReply={isReply}
+                        setIsReply={setIsReply}
                     />
-                ))}
+                })}
             </div>
             <MessageInput 
                 connected={true}
-                sendMessage={sendMessage}
                 roomId={roomId}
                 theme={theme}
+                isReply={isReply}
+                setIsReply={setIsReply}
             />
         </div>
     );
