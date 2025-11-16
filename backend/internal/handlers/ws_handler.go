@@ -151,6 +151,10 @@ func (h *WsHandler) handleTextMessage(conn *ws.Connection, envelope ws.WsMessage
 		log.Println("[ws] failed to save message:", err)
 		return
 	}
+    if msg == nil {
+        log.Println("[ws] ERROR: chatService returned nil msg with nil error")
+        return
+    }
 
 	out := ws.OutgoingTextData{
 		MessageId:     msg.ID,
