@@ -55,8 +55,9 @@ type OutgoingTextData struct {
 	SenderId      string      `json:"senderId"`
 	Content       string      `json:"content"`
 	RoomId        string      `json:"roomId"`
-	ReplyContent  *string     `json:"replyContent,omitempty"`
-	SenderName    string      `json:"senderName,omitempty"`
+	ReplyContent  *string     `json:"replyContent"`
+	SenderName    string      `json:"senderName"`
+	Reactions []domain.ReactionType `json:"reactions"`
 	SenderProfile domain.ProfileType `json:"senderProfile,omitempty"`
 }
 

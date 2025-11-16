@@ -156,12 +156,19 @@ func (h *WsHandler) handleTextMessage(conn *ws.Connection, envelope ws.WsMessage
         return
     }
 
+		replyContent := ""
+	if in.ReplyContent != nil {
+		replyContent = *in.ReplyContent
+	}
+
+
 	out := ws.OutgoingTextData{
 		MessageId:     msg.ID,
 		SenderId:      senderId,
 		Content:       msg.Content,
 		RoomId:        msg.RoomID,
-		ReplyContent:  in.ReplyContent,
+		ReplyContent:  &replyContent,
+		Reactions:     []domain.ReactionType{},    
 		SenderName:    userInfo.Name,
 		SenderProfile: userInfo.Profile,
 	}
