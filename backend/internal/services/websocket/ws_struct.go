@@ -15,7 +15,6 @@ const (
 	TypeReactMessage     MessageType = "react_message"
 	TypeCreateRoom       MessageType = "create_room"
 	TypeJoinRoom         MessageType = "join_room"
-	TypeRoomMemberJoined MessageType = "room_member_joined"
 )
 
 type UserStatus string

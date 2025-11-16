@@ -246,9 +246,6 @@ func (h *WsHandler) handleJoinRoom(conn *ws.Connection, envelope ws.WsMessage) {
 	h.hub.AddToRoom(in.RoomId, conn)
 
 	userId := h.hub.UserIDForConn(conn)
-	if userId == "" {
-		userId = in.UserId
-	}
 
 	userInfo, _ := h.hub.UserInfo(userId)
 
@@ -260,7 +257,7 @@ func (h *WsHandler) handleJoinRoom(conn *ws.Connection, envelope ws.WsMessage) {
 	}
 
 	outEnvelope := ws.WsMessage{
-		Type:   ws.TypeRoomMemberJoined,
+		Type:   ws.TypeJoinRoom,
 		Status: "",
 		Data:   ws.MustMarshal(joined),
 	}
