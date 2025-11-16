@@ -74,7 +74,9 @@ func (h *ChatHandler) GetPublicRooms(c *fiber.Ctx) error {
 		})
 	}
 
-	return c.JSON(response)
+	return c.JSON(fiber.Map{
+		"data": response,
+	})
 }
 
 func (h *ChatHandler) GetPrivateRoomByTargetID(c *fiber.Ctx) error {
@@ -88,7 +90,9 @@ func (h *ChatHandler) GetPrivateRoomByTargetID(c *fiber.Ctx) error {
 			"error": "failed to get private room",
 		})
 	}
-	return c.JSON(rooms)
+	return c.JSON(fiber.Map{
+	"data": rooms,
+})
 }
 
 // type ChatWSHandler struct {
