@@ -1,15 +1,10 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { auth } from "@/lib/firebase/firebase";
 import { useAuth } from "@/context/authContext";
 import { useRouter } from "next/navigation";
-
-interface OnlineUser {
-  userId: string;
-  name: string;
-  profile: number;
-}
+import { useWebSocket, WsMessage } from "@/context/wsContext";
 
 interface Room {
   roomId: string;
@@ -20,22 +15,14 @@ interface Room {
   isJoined: boolean;
 }
 
-interface WsMessage {
-  type: string;
-  status?: string;
-  data: any;
-}
-
 export default function Home() {
   const { name: currentUserName } = useAuth();
-  const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
+  const { isConnected, onlineUsers, sendMessage, addMessageHandler } =
+    useWebSocket();
   const [rooms, setRooms] = useState<Room[]>([]);
-  const [isConnected, setIsConnected] = useState(false);
-  const wsRef = useRef<WebSocket | null>(null);
-
   const router = useRouter();
 
-  const fetchPublicRooms = async () => {
+  const fetchPublicRooms = useCallback(async () => {
     try {
       const token = await auth.currentUser?.getIdToken();
       const apiUrl =
@@ -55,7 +42,7 @@ export default function Home() {
             roomId: room.id,
             createdBy: room.creatorId,
             chatName: room.roomName,
-            userId: Array(room.memberNumber).fill("member"), // or leave it empty and fetch member list later
+            userId: Array(room.memberNumber).fill("member"),
             background: room.backgroundColor,
             isJoined: room.isJoined,
           }))
@@ -64,147 +51,36 @@ export default function Home() {
     } catch (err) {
       console.error("Failed to load public rooms:", err);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    const connectWebSocket = async () => {
-      try {
-        // Get Firebase auth token
-        const currentUser = auth.currentUser;
-        if (!currentUser) {
-          console.error("User not authenticated");
-          return;
-        }
+    // PAGE-SPECIFIC: Handle join_room messages
+    const handleMessage = (message: WsMessage) => {
+      if (message.type === "join_room") {
+        const joinData =
+          typeof message.data === "string"
+            ? JSON.parse(message.data)
+            : message.data;
 
-        const token = await currentUser.getIdToken();
-        const apiUrl =
-          process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
-        const wsUrl = apiUrl
-          .replace("http://", "ws://")
-          .replace("https://", "wss://");
-
-        // Connect to WebSocket with auth token (backend expects /ws endpoint)
-        const ws = new WebSocket(`${wsUrl}/ws?token=${token}`);
-
-        ws.onopen = () => {
-          console.log("WebSocket connected");
-          setIsConnected(true);
-          wsRef.current = ws;
-
-          // Load all public rooms from backend
-          fetchPublicRooms();
-        };
-
-        ws.onmessage = (event) => {
-          try {
-            const message: WsMessage = JSON.parse(event.data);
-            console.log("Received message:", message);
-
-            // Handle presence snapshot (initial list of online users)
-            if (message.type === "presence_snapshot") {
-              const snapshotData =
-                typeof message.data === "string"
-                  ? JSON.parse(message.data)
-                  : message.data;
-
-              if (snapshotData.users && Array.isArray(snapshotData.users)) {
-                setOnlineUsers(snapshotData.users);
-              }
-            }
-
-            // Handle user presence updates (user going online/offline)
-            if (message.type === "user_presence") {
-              const presenceData =
-                typeof message.data === "string"
-                  ? JSON.parse(message.data)
-                  : message.data;
-
-              if (message.status === "online") {
-                // Add or update user in the list
-                setOnlineUsers((prev) => {
-                  const exists = prev.find(
-                    (u) => u.userId === presenceData.userId
-                  );
-                  if (exists) {
-                    return prev.map((u) =>
-                      u.userId === presenceData.userId
-                        ? {
-                            userId: presenceData.userId,
-                            name: presenceData.name,
-                            profile: presenceData.profile,
-                          }
-                        : u
-                    );
-                  }
-                  return [
-                    ...prev,
-                    {
-                      userId: presenceData.userId,
-                      name: presenceData.name,
-                      profile: presenceData.profile,
-                    },
-                  ];
-                });
-              } else if (message.status === "offline") {
-                // Remove user from the list
-                setOnlineUsers((prev) =>
-                  prev.filter((u) => u.userId !== presenceData.userId)
-                );
-              }
-            }
-
-            if (message.type === "join_room") {
-              const joinData =
-                typeof message.data === "string"
-                  ? JSON.parse(message.data)
-                  : message.data;
-
-              setRooms((prev) =>
-                prev.map((r) =>
-                  r.roomId === joinData.roomId ? { ...r, isJoined: true } : r
-                )
-              );
-              router.push(`/chat/${joinData.roomId}`);
-            }
-          } catch (error) {
-            console.error("Error parsing message:", error);
-          }
-        };
-
-        ws.onerror = (error) => {
-          console.error("WebSocket error:", error);
-        };
-
-        ws.onclose = () => {
-          console.log("WebSocket disconnected");
-          setIsConnected(false);
-          wsRef.current = null;
-        };
-
-        return () => {
-          if (ws.readyState === WebSocket.OPEN) {
-            ws.close();
-          }
-        };
-      } catch (error) {
-        console.error("Error connecting to WebSocket:", error);
+        setRooms((prev) =>
+          prev.map((r) =>
+            r.roomId === joinData.roomId ? { ...r, isJoined: true } : r
+          )
+        );
+        router.push(`/chat/${joinData.roomId}`);
       }
     };
 
-    // Wait for auth state to be ready
-    const unsubscribe = auth.onAuthStateChanged((currentUser) => {
-      if (currentUser) {
-        connectWebSocket();
-      }
-    });
+    // Subscribe to WebSocket messages
+    const unsubscribe = addMessageHandler(handleMessage);
 
-    return () => {
-      unsubscribe();
-      if (wsRef.current?.readyState === WebSocket.OPEN) {
-        wsRef.current.close();
-      }
-    };
-  }, []);
+    // Load public rooms when WebSocket connects
+    if (isConnected) {
+      fetchPublicRooms();
+    }
+
+    return unsubscribe;
+  }, [isConnected, addMessageHandler, fetchPublicRooms, router]);
 
   return (
     <div className="w-full min-h-screen bg-primary p-6 flex flex-col gap-6">
@@ -280,26 +156,18 @@ export default function Home() {
                     : "bg-secondary hover:bg-opacity-90"
                 }`}
                 onClick={() => {
-                  // Already joined → go to chat directly (NO websocket)
+                  // PAGE-SPECIFIC: Already joined → go to chat directly (NO websocket)
                   if (room.isJoined) {
                     router.push(`/chat/${room.roomId}`);
                     return;
                   }
 
-                  // Not joined → send join websocket
-                  if (!wsRef.current) return;
-                  if (wsRef.current.readyState !== WebSocket.OPEN) {
-                    alert("WebSocket not connected. Please wait...");
-                    return;
-                  }
-
+                  // PAGE-SPECIFIC: Not joined → send join websocket message
                   try {
-                    wsRef.current.send(
-                      JSON.stringify({
-                        type: "join_room",
-                        data: { roomId: room.roomId },
-                      })
-                    );
+                    sendMessage({
+                      type: "join_room",
+                      data: { roomId: room.roomId },
+                    });
                   } catch (error) {
                     console.error("Error sending join room message:", error);
                     alert("Failed to join room. Please try again.");
