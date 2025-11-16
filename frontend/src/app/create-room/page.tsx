@@ -12,13 +12,13 @@ export default function CreateRoom() {
   const [isCreating, setIsCreating] = useState(false);
   const router = useRouter();
 
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
 
   useEffect(() => {
-    if (!user) {
+    if (!loading && !user) {
       router.push("/signin");
     }
-  }, [user, router]);
+  }, [user, loading, router]);
 
   useEffect(() => {
     const handleMessage = (message: WsMessage) => {

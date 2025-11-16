@@ -19,17 +19,17 @@ interface Room {
 }
 
 export default function Home() {
-  const { name: currentUserName } = useAuth();
+  const { name: currentUserName, loading } = useAuth();
   const { isConnected, onlineUsers, sendMessage, addMessageHandler } =
     useWebSocket();
   const [rooms, setRooms] = useState<Room[]>([]);
   const router = useRouter();
 
   useEffect(() => {
-    if (!currentUserName) {
+    if (!loading && !currentUserName) {
       router.push("/signin");
     }
-  }, [currentUserName, router]);
+  }, [currentUserName, loading, router]);
 
   const fetchPublicRooms = useCallback(async () => {
     try {
