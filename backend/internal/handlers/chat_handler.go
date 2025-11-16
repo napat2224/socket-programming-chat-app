@@ -2,8 +2,10 @@ package handlers
 
 import (
 	"context"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/napat2224/socket-programming-chat-app/internal/domain"
 	"github.com/napat2224/socket-programming-chat-app/internal/services"
 )
 
@@ -17,6 +19,18 @@ func NewChatHandler(service *services.ChatService) *ChatHandler {
 	}
 }
 
+// PublicRoomResponse represents a public room with additional user-specific fields
+type PublicRoomResponse struct {
+	ID              string                 `json:"id"`
+	CreatorID       string                 `json:"creatorId"`
+	RoomName        string                 `json:"roomName,omitempty"`
+	BackgroundColor domain.BackgroundColor `json:"backgroundColor,omitempty"`
+	LastMessageSent time.Time              `json:"lastMessageSent,omitempty"`
+	IsPublic        bool                   `json:"isPublic"`
+	IsJoined        bool                   `json:"isJoined"`
+	MemberNumber    int                    `json:"memberNumber"`
+}
+
 // Implement handler for each API endpoints here
 func (h *ChatHandler) GetPublicRooms(c *fiber.Ctx) error {
 	ctx := context.Background()
@@ -26,7 +40,41 @@ func (h *ChatHandler) GetPublicRooms(c *fiber.Ctx) error {
 			"error": err.Error(),
 		})
 	}
-	return c.JSON(rooms)
+
+	// Get current user ID from claims if authenticated
+	var currentUserID string
+	claims, ok := c.Locals("claims").(*services.Claims)
+	if ok && claims != nil {
+		currentUserID = claims.UserID
+	}
+
+	// Transform rooms to response DTOs with isJoined and memberNumber fields
+	response := make([]PublicRoomResponse, 0, len(rooms))
+	for _, room := range rooms {
+		isJoined := false
+		if currentUserID != "" {
+			// Check if current user is in the room's member list
+			for _, memberID := range room.MemberIDs {
+				if memberID == currentUserID {
+					isJoined = true
+					break
+				}
+			}
+		}
+
+		response = append(response, PublicRoomResponse{
+			ID:              room.ID,
+			CreatorID:       room.CreatorID,
+			RoomName:        room.RoomName,
+			BackgroundColor: room.BackgroundColor,
+			LastMessageSent: room.LastMessageSent,
+			IsPublic:        room.IsPublic,
+			IsJoined:        isJoined,
+			MemberNumber:    len(room.MemberIDs),
+		})
+	}
+
+	return c.JSON(response)
 }
 
 func (h *ChatHandler) GetPrivateRoomByTargetID(c *fiber.Ctx) error {

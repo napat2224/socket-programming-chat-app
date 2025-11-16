@@ -42,7 +42,7 @@ func setupChatRoutes(api fiber.Router, chatHandler *handlers.ChatHandler, authMi
 	// Uncomment once finishing implement chat handler
 
 	rooms := api.Group("/rooms")
-	rooms.Get("/public", chatHandler.GetPublicRooms)
+	rooms.Get("/public", authMiddleware.AddClaims, chatHandler.GetPublicRooms)
 	rooms.Get("/private/:targetID", authMiddleware.AddClaims, chatHandler.GetPrivateRoomByTargetID)
 	// chats.Get("/:roomID/messages", r.authMiddleware.AddClaims, r.chatHandler.GetMessagesByRoomID)
 	// chats.Post("/rooms", r.authMiddleware.AddClaims, r.chatHandler.CreateRoom)
