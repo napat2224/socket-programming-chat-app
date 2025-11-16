@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"log"
+	"strconv"
 
 	firebase "firebase.google.com/go/v4"
 	"firebase.google.com/go/v4/auth"
@@ -39,8 +40,10 @@ func InitFirebase(ctx context.Context, firebaseAccountKeyFile string) *auth.Clie
 }
 
 func (f *FirebaseAuth) VerifyIDToken(ctx context.Context, token string) (*Claims, error) {
+	log.Println("Verifying ID token", token)
 	t, err := f.client.VerifyIDToken(ctx, token)
 	if err != nil {
+		log.Println("Error verifying ID token:", err)
 		return nil, err
 	}
 
@@ -59,8 +62,12 @@ func (f *FirebaseAuth) VerifyIDToken(ctx context.Context, token string) (*Claims
 	}
 
 	// extract custom "profile" claim if set in Firebase
-	if profile, ok := t.Claims["profile"].(int); ok {
-		claims.Profile = profile
+	if profile, ok := t.Claims["profile"].(string); ok {
+		profileInt, err := strconv.Atoi(profile)
+		if err == nil {
+			claims.Profile = profileInt
+		}
+		claims.Profile = profileInt
 	}
 
 	return claims, nil

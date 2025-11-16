@@ -111,6 +111,8 @@ func main() {
 	wsHandler := handlers.NewWsHandler(hub,chat)
 	authMid := middleware.NewAuthMiddleware(authService)
 
+	// ws hub
+	hub := chatWs.NewHub()
 	router.SetupRoutes(
 		app.app,
 		authMid,
