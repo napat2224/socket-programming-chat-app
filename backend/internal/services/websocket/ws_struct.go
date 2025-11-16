@@ -71,7 +71,6 @@ type OutgoingReactData struct {
 }
 
 type IncomingCreateRoomData struct {
-	RoomId     string   `json:"roomId"`
 	ChatName   string   `json:"chatName"`
 	Background domain.BackgroundColor   `json:"background"`
 }
@@ -86,7 +85,6 @@ type OutgoingCreateRoomData struct {
 
 type IncomingJoinRoomData struct {
 	RoomId string `json:"roomId"`
-	UserId string `json:"userId"`
 }
 
 type RoomMemberJoinedData struct {
