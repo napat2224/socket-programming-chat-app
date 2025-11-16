@@ -3,6 +3,7 @@ package router
 
 import (
 	"github.com/gofiber/fiber/v2"
+	fiberws "github.com/gofiber/websocket/v2"
 	"github.com/napat2224/socket-programming-chat-app/internal/handlers"
 	"github.com/napat2224/socket-programming-chat-app/internal/middleware"
 )
@@ -12,12 +13,16 @@ func SetupRoutes(
 	app *fiber.App,
 	authMiddleware *middleware.AuthMiddleware,
 	userHandler *handlers.UserHandler,
-	chatHandler *handlers.ChatHandler,
+	wsHandler *handlers.WsHandler,
 ) {
 	app.Get("/health", func(c *fiber.Ctx) error {
 		return c.JSON(fiber.Map{"status": "healthy"})
 	})
-
+	app.Get(
+		"/ws",
+		authMiddleware.AddClaims,   
+		fiberws.New(wsHandler.Handle), 
+	)
 	api := app.Group("/api")
 
 	setupUserRoutes(api, userHandler, authMiddleware)
