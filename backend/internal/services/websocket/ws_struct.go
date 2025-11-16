@@ -33,7 +33,7 @@ type WsMessage struct {
 type UserPresenceData struct {
 	UserId  string      `json:"userId"`
 	Name    string      `json:"name"`
-	Profile domain.ProfileType `json:"profile"`
+	Profile domain.ProfileType `json:"profile,omitempty"`
 }
 
 type UserOfflineData struct{
@@ -91,7 +91,7 @@ type RoomMemberJoinedData struct {
 	RoomId  string      `json:"roomId"`
 	UserId  string      `json:"userId"`
 	Name    string      `json:"name"`
-	Profile domain.ProfileType `json:"profile"`
+	Profile domain.ProfileType `json:"profile,omitempty"`
 }
 
 func MustMarshal(v any) []byte {
