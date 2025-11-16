@@ -148,7 +148,7 @@ func (r *RoomRepository) JoinRoom(ctx context.Context, roomID string, userID str
 	}
 
 	filter := bson.M{"_id": objID}
-	update := bson.M{"$push": bson.M{"member_ids": userID}}
+	update := bson.M{"$addToSet": bson.M{"member_ids": userID}}
 	_, err = r.collection.UpdateOne(ctx, filter, update)
 	if err != nil {
 		return err
@@ -166,11 +166,11 @@ func (r *RoomRepository) GetChatRoomsByRoomID(ctx context.Context, roomID string
 
     var room models.RoomModel
     err = r.collection.FindOne(ctx, filter).Decode(&room)
-	if err != nil {
-		return nil, err
-	}
+    if err != nil {
+        return nil, err
+    }
 
-	return room.ToDomain(), nil
+    return room.ToDomain(), nil
 }
 
 // func (r *RoomRepository) UpdateRoom(ctx context.Context, roomID string, background string) (*domain.Room, error) {
