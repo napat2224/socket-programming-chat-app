@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { auth } from "@/lib/firebase/firebase";
+import { useAuth } from "@/context/authContext";
 import { useRouter } from "next/navigation";
+import { useWebSocket, WsMessage } from "@/context/wsContext";
 
 interface WsMessage {
   type: string;
@@ -10,121 +12,29 @@ interface WsMessage {
   data: any;
 }
 
-type BackgroundColor =
-  | "red"
-  | "blue"
-  | "green"
-  | "yellow"
-  | "purple"
-  | "pink"
-  | "teal"
-  | "orange"
-  | "gray"
-  | "black";
-
-const BACKGROUND_COLORS: BackgroundColor[] = [
-  "red",
-  "blue",
-  "green",
-  "yellow",
-  "purple",
-  "pink",
-  "teal",
-  "orange",
-  "gray",
-  "black",
-];
-
 export default function CreateRoom() {
   const [roomName, setRoomName] = useState("");
-  const [selectedColor, setSelectedColor] = useState<BackgroundColor>("blue");
-  const [isConnected, setIsConnected] = useState(false);
+  const [selectedColor, setSelectedColor] = useState<number>("0");
+  const { isConnected, sendMessage, addMessageHandler } = useWebSocket();
   const [isCreating, setIsCreating] = useState(false);
-  const wsRef = useRef<WebSocket | null>(null);
   const router = useRouter();
 
   useEffect(() => {
-    const connectWebSocket = async () => {
-      try {
-        const currentUser = auth.currentUser;
-        if (!currentUser) {
-          console.error("User not authenticated");
-          router.push("/signin");
-          return;
-        }
-
-        const token = await currentUser.getIdToken();
-        const apiUrl =
-          process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
-        const wsUrl = apiUrl
-          .replace("http://", "ws://")
-          .replace("https://", "wss://");
-
-        const ws = new WebSocket(`${wsUrl}/ws?token=${token}`);
-
-        ws.onopen = () => {
-          console.log("WebSocket connected");
-          setIsConnected(true);
-          wsRef.current = ws;
-        };
-
-        ws.onmessage = (event) => {
-          try {
-            const message: WsMessage = JSON.parse(event.data);
-            console.log("Received message:", message);
-
-            // Handle room creation success
-            if (message.type === "create_room") {
-              const roomData =
-                typeof message.data === "string"
-                  ? JSON.parse(message.data)
-                  : message.data;
-
-              console.log("Room created:", roomData);
-              setIsCreating(false);
-              // Navigate back to home page after successful creation
-              router.push("/home");
-            }
-          } catch (error) {
-            console.error("Error parsing message:", error);
-          }
-        };
-
-        ws.onerror = (error) => {
-          console.error("WebSocket error:", error);
-        };
-
-        ws.onclose = () => {
-          console.log("WebSocket disconnected");
-          setIsConnected(false);
-          wsRef.current = null;
-        };
-
-        return () => {
-          if (ws.readyState === WebSocket.OPEN) {
-            ws.close();
-          }
-        };
-      } catch (error) {
-        console.error("Error connecting to WebSocket:", error);
+    const handleMessage = (message: WsMessage) => {
+      if (message.type === "create_room") {
+        const roomData =
+          typeof message.data === "string"
+            ? JSON.parse(message.data)
+            : message.data;
+        console.log("Room created:", roomData);
+        setIsCreating(false);
+        router.push("/home"); // navigate after successful creation
       }
     };
 
-    const unsubscribe = auth.onAuthStateChanged((currentUser) => {
-      if (currentUser) {
-        connectWebSocket();
-      } else {
-        router.push("/signin");
-      }
-    });
-
-    return () => {
-      unsubscribe();
-      if (wsRef.current?.readyState === WebSocket.OPEN) {
-        wsRef.current.close();
-      }
-    };
-  }, [router]);
+    const unsubscribe = addMessageHandler(handleMessage);
+    return unsubscribe;
+  }, [addMessageHandler, router]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -134,7 +44,7 @@ export default function CreateRoom() {
       return;
     }
 
-    if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
+    if (!isConnected) {
       alert("WebSocket not connected. Please wait...");
       return;
     }
@@ -142,7 +52,7 @@ export default function CreateRoom() {
     setIsCreating(true);
 
     const createRoomData = {
-      id: "1234",
+      id: "1234", // optional, backend can generate
       chatName: roomName.trim(),
       background: selectedColor,
     };
@@ -153,8 +63,7 @@ export default function CreateRoom() {
     };
 
     try {
-      wsRef.current.send(JSON.stringify(createRoomMessage));
-      // Wait for WebSocket response before navigating or resetting isCreating
+      sendMessage(createRoomMessage); // ✅ use context
     } catch (error) {
       console.error("Error sending create room message:", error);
       alert("Failed to create room. Please try again.");

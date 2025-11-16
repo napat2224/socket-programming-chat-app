@@ -74,7 +74,7 @@ export default function Home() {
       }
 
       const json = await res.json();
-      const roomId = json.data.id; // assuming your API returns { data: { id: string, ... } }
+      const roomId = json.data.id;
 
       // Navigate to chat
       router.push(`/chat/private/${roomId}`);
