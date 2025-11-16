@@ -2,6 +2,7 @@ export interface MessageProps {
     id: string
     roomId: string
     senderId: string
+    senderProfile: number
     senderName: string;
     content: string
     replyTo: string | null

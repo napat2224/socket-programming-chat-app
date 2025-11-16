@@ -5,11 +5,13 @@ import { ThemeProps } from "@/types/chatThemes";
 import { CornerUpRight, SmilePlus } from "lucide-react";
 import { useEffect, useState } from "react";
 import Image from "next/image";
+import { avatars } from "@/types/avatar";
 
 export default function Message ({
     id,
     roomId,
     senderId,
+    senderProfile,
     senderName,
     content,
     replyTo,
@@ -30,9 +32,18 @@ export default function Message ({
 
     return (
         <div className={`w-full flex flex-col ${isMine? "items-end":"items-start"} gap-1 px-3 ${theme.text}`}>
-            <span className={`text-lg  font-semibold`}>
-                {senderName}
-            </span>
+            <div className="flex items-center gap-3 my-2">
+                <Image
+                    src={avatars[senderProfile]}
+                    alt={senderName}
+                    width={40}
+                    height={40}
+                    className={`rounded-full ${isMine? "order-2":""}`}
+                />
+                <span className={`text-lg font-semibold ${isMine? "order-1":""}`}>
+                    {senderName}
+                </span>
+            </div>
             {replyTo && 
             <div className={`w-full flex items-start gap-1 p-2 
                     ${isMine? "justify-end":"justify-start"}`}>
