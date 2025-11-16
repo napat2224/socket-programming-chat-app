@@ -61,12 +61,6 @@ export default function Home() {
           typeof message.data === "string"
             ? JSON.parse(message.data)
             : message.data;
-
-        setRooms((prev) =>
-          prev.map((r) =>
-            r.roomId === joinData.roomId ? { ...r, isJoined: true } : r
-          )
-        );
         router.push(`/chat/${joinData.roomId}`);
       }
     };
@@ -144,16 +138,11 @@ export default function Home() {
                   Members: {room.userId.length}
                 </span>
               </div>
-              {room.isJoined && (
-                <span className="text-green-600 text-xs mt-1 font-semibold">
-                  ✔ Joined
-                </span>
-              )}
               <button
                 className={`px-6 py-2 rounded-full text-neutral-white transition-all ${
                   room.isJoined
                     ? "bg-green-700 hover:bg-green-800"
-                    : "bg-secondary hover:bg-opacity-90"
+                    : "bg-secondary hover:bg-red-300"
                 }`}
                 onClick={() => {
                   // PAGE-SPECIFIC: Already joined → go to chat directly (NO websocket)
