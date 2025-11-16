@@ -27,7 +27,7 @@ func SetupRoutes(
 
 	setupUserRoutes(api, userHandler, authMiddleware)
 	setupTestRouter(api, authMiddleware)
-	setupChatRoutes(api, chatHandler)
+	setupChatRoutes(api, chatHandler, authMiddleware)
 	// setupWebsocketRoutes(app, hub, authMiddleware)
 }
 
@@ -38,11 +38,12 @@ func setupUserRoutes(api fiber.Router, userHandler *handlers.UserHandler, authMi
 	users.Get("/me", authMiddleware.AddClaims, userHandler.GetMe)
 }
 
-func setupChatRoutes(api fiber.Router, chatHandler *handlers.ChatHandler) {
+func setupChatRoutes(api fiber.Router, chatHandler *handlers.ChatHandler, authMiddleware *middleware.AuthMiddleware) {
 	// Uncomment once finishing implement chat handler
 
 	rooms := api.Group("/rooms")
 	rooms.Get("/public", chatHandler.GetPublicRooms)
+	rooms.Get("/private/:targetID", authMiddleware.AddClaims, chatHandler.GetPrivateRoomByTargetID)
 	// chats.Get("/:roomID/messages", r.authMiddleware.AddClaims, r.chatHandler.GetMessagesByRoomID)
 	// chats.Post("/rooms", r.authMiddleware.AddClaims, r.chatHandler.CreateRoom)
 	// chats.Get("/customer/rooms", r.authMiddleware.AddClaims, r.chatHandler.GetChatRoomsByCustomerID)

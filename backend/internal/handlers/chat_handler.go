@@ -29,6 +29,20 @@ func (h *ChatHandler) GetPublicRooms(c *fiber.Ctx) error {
 	return c.JSON(rooms)
 }
 
+func (h *ChatHandler) GetPrivateRoomByTargetID(c *fiber.Ctx) error {
+	ctx := context.Background()
+	targetID := c.Params("targetID")
+	claims := c.Locals("claims").(*services.Claims)
+	currentUserID := claims.UserID
+	rooms, err := h.chatService.GetPrivateRoomByTargetID(ctx, currentUserID, targetID)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "failed to get private room",
+		})
+	}
+	return c.JSON(rooms)
+}
+
 // type ChatWSHandler struct {
 // 	hub            *chatWs.Hub
 // 	httpClient     *http.Client
