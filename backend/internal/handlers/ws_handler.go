@@ -182,6 +182,17 @@ func (h *WsHandler) handleReactMessage(conn *ws.Connection, envelope ws.WsMessag
 		return
 	}
 
+	msg, err := h.chatService.AddReaction(
+		context.Background(),
+		in.MessageId,
+		in.ReactType,
+	)
+		if err != nil {
+		log.Println("[ws] failed to add reaction:", err)
+		return
+	}
+
+
 	out := ws.OutgoingReactData{
 		MessageId: in.MessageId,
 		ReactType: in.ReactType,
@@ -193,7 +204,7 @@ func (h *WsHandler) handleReactMessage(conn *ws.Connection, envelope ws.WsMessag
 		Data:   ws.MustMarshal(out),
 	}
 
-	_ = outEnvelope
+	h.hub.BroadcastToRoom(msg.RoomID, ws.MustMarshal(outEnvelope))
 }
 
 func (h *WsHandler) handleCreateRoom(conn *ws.Connection, envelope ws.WsMessage) {
