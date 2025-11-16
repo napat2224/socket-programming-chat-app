@@ -33,8 +33,7 @@ export default function RootLayout({
       >
         <AuthProvider>
           <WebSocketProvider>
-            <Navbar />
-            <main className="mt-13">{children}</main>
+            <main>{children}</main>
           </WebSocketProvider>
         </AuthProvider>
         <Toaster />
