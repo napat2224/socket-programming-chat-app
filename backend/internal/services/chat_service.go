@@ -117,3 +117,11 @@ func (s *ChatService) GetPrivateRoomByTargetID(ctx context.Context, currentUserI
 	log.Println("private room found:", room)
 	return room, nil
 }
+
+func (s *ChatService) AddReaction(
+	ctx context.Context,
+	messageID string,
+	reaction domain.ReactionType,
+) (*domain.Message, error) {
+	return s.messageRepo.AddReaction(ctx, messageID, reaction)
+}
