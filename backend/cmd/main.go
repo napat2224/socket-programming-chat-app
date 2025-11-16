@@ -15,7 +15,7 @@ import (
 	"github.com/napat2224/socket-programming-chat-app/internal/repository"
 	"github.com/napat2224/socket-programming-chat-app/internal/router"
 	"github.com/napat2224/socket-programming-chat-app/internal/services"
-	chatWs "github.com/napat2224/socket-programming-chat-app/internal/services/websocket"
+	ws "github.com/napat2224/socket-programming-chat-app/internal/services/websocket"
 	"github.com/napat2224/socket-programming-chat-app/internal/utils/config"
 	"github.com/napat2224/socket-programming-chat-app/internal/utils/db"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -97,6 +97,8 @@ func main() {
 
 	// Initialize repository
 	userRepo := repository.NewUserRepository(app.database, cfg.UserCollectionName)
+	roomRepo := repository.NewMongoRoomRepository(app.database, cfg.RoomCollectionName)
+	messageRepo := repository.NewMongoMessageRepository(app.database, cfg.MassageCollectionName)
 
 	// Initialize service here
 	authClient := services.InitFirebase(context.Background(), cfg.FirebaseAccountKeyFile)
@@ -104,18 +106,18 @@ func main() {
 	userService := services.NewUserService(authService, userRepo)
 	userHandler := handlers.NewUserHandler(userService)
 
-	chat := services.NewChatService()
-	chatHandler := handlers.NewChatHandler(chat)
+	chat := services.NewChatService(roomRepo,messageRepo)
+	hub := ws.NewHub()
+	wsHandler := handlers.NewWsHandler(hub,chat)
 	authMid := middleware.NewAuthMiddleware(authService)
-
+	chatHandler := handlers.NewChatHandler(chat)
 	// ws hub
-	hub := chatWs.NewHub()
 	router.SetupRoutes(
 		app.app,
 		authMid,
 		userHandler,
+		wsHandler,
 		chatHandler,
-		hub,
 	)
 
 	// Graceful shutdown
