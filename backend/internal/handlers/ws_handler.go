@@ -25,97 +25,99 @@ func NewWsHandler(hub *ws.Hub, chatService *services.ChatService) *WsHandler {
 }
 
 func (h *WsHandler) Handle(c *websocket.Conn) {
-	userIdAny := c.Locals("userId")
-	nameAny := c.Locals("name")
-	profileAny := c.Locals("profile")
+    claimsAny := c.Locals("claims")
+    claims, ok := claimsAny.(*services.Claims)
+    if !ok || claims == nil {
+        log.Println("[ws] missing claims in context, closing connection")
+        _ = c.Close()
+        return
+    }
 
-	userId, _ := userIdAny.(string)
-	name, _ := nameAny.(string)
-	profileInt, _ := profileAny.(int)
+    userId := claims.UserID
+    name := claims.Name
+    p := domain.ProfileType(claims.Profile)
 
-	if userId == "" {
-		log.Println("[ws] missing userId in context, closing connection")
-		_ = c.Close()
-		return
-	}
+    if userId == "" {
+        log.Println("[ws] empty userId from claims, closing connection")
+        _ = c.Close()
+        return
+    }
 
-	p := domain.ProfileType(profileInt)
+    conn := ws.NewConnection(c)
 
-	conn := ws.NewConnection(c)
+    presence := ws.UserPresenceData{
+        UserId:  userId,
+        Name:    name,
+        Profile: p,
+    }
 
-	presence := ws.UserPresenceData{
-		UserId:  userId,
-		Name:    name,
-		Profile: p,
-	}
+    h.hub.AddUser(presence, conn)
 
-	h.hub.AddUser(presence, conn)
+    snapshot := ws.PresenceSnapshotData{
+        Users: h.hub.OnlineUsers(),
+    }
+    snapMsg := ws.WsMessage{
+        Type:   ws.TypePresenceSnapshot,
+        Status: "",
+        Data:   ws.MustMarshal(snapshot),
+    }
+    if err := conn.Send(ws.MustMarshal(snapMsg)); err != nil {
+        log.Println("[ws] failed to send snapshot:", err)
+    }
 
-	snapshot := ws.PresenceSnapshotData{
-		Users: h.hub.OnlineUsers(),
-	}
-	snapMsg := ws.WsMessage{
-		Type:   ws.TypePresenceSnapshot,
-		Status: "",
-		Data:   ws.MustMarshal(snapshot),
-	}
-	if err := conn.Send(ws.MustMarshal(snapMsg)); err != nil {
-		log.Println("[ws] failed to send snapshot:", err)
-	}
+    onlineEnvelope := ws.WsMessage{
+        Type:   ws.TypeUserPresence,
+        Status: ws.StatusOnline,
+        Data:   ws.MustMarshal(presence),
+    }
+    h.hub.BroadcastToAllExcept(conn, ws.MustMarshal(onlineEnvelope))
 
-	onlineEnvelope := ws.WsMessage{
-		Type:   ws.TypeUserPresence,
-		Status: ws.StatusOnline,
-		Data:   ws.MustMarshal(presence),
-	}
-	h.hub.BroadcastToAllExcept(conn, ws.MustMarshal(onlineEnvelope))
+    defer func() {
+        userId, last := h.hub.Remove(conn)
+        if userId != "" && last {
+            data := ws.UserOfflineData{
+                UserId: userId,
+            }
+            envelope := ws.WsMessage{
+                Type:   ws.TypeUserPresence,
+                Status: ws.StatusOffline,
+                Data:   ws.MustMarshal(data),
+            }
+            h.hub.BroadcastToAll(ws.MustMarshal(envelope))
+        }
+        conn.Close()
+    }()
 
-	defer func() {
-		userId, last := h.hub.Remove(conn)
-		if userId != "" && last {
-			data := ws.UserOfflineData{
-				UserId: userId,
-			}
-			envelope := ws.WsMessage{
-				Type:   ws.TypeUserPresence,
-				Status: ws.StatusOffline,
-				Data:   ws.MustMarshal(data),
-			}
-			h.hub.BroadcastToAll(ws.MustMarshal(envelope))
-		}
-		conn.Close()
-	}()
+    for {
+        raw, err := conn.Read()
+        if err != nil {
+            log.Println("[ws] read error:", err)
+            break
+        }
 
-	for {
-		raw, err := conn.Read()
-		if err != nil {
-			log.Println("[ws] read error:", err)
-			break
-		}
+        var envelope ws.WsMessage
+        if err := json.Unmarshal(raw, &envelope); err != nil {
+            log.Println("[ws] invalid ws message:", err)
+            continue
+        }
 
-		var envelope ws.WsMessage
-		if err := json.Unmarshal(raw, &envelope); err != nil {
-			log.Println("[ws] invalid ws message:", err)
-			continue
-		}
+        switch envelope.Type {
+        case ws.TypeTextMessage:
+            h.handleTextMessage(conn, envelope)
 
-		switch envelope.Type {
-		case ws.TypeTextMessage:
-			h.handleTextMessage(conn, envelope)
+        case ws.TypeReactMessage:
+            h.handleReactMessage(conn, envelope)
 
-		case ws.TypeReactMessage:
-			h.handleReactMessage(conn, envelope)
+        case ws.TypeCreateRoom:
+            h.handleCreateRoom(conn, envelope)
 
-		case ws.TypeCreateRoom:
-			h.handleCreateRoom(conn, envelope)
+        case ws.TypeJoinRoom:
+            h.handleJoinRoom(conn, envelope)
 
-		case ws.TypeJoinRoom:
-			h.handleJoinRoom(conn, envelope)
-
-		default:
-			log.Println("[ws] unknown message type:", envelope.Type)
-		}
-	}
+        default:
+            log.Println("[ws] unknown message type:", envelope.Type)
+        }
+    }
 }
 
 func (h *WsHandler) handleTextMessage(conn *ws.Connection, envelope ws.WsMessage) {
