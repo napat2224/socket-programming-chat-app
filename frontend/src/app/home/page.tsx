@@ -1,8 +1,9 @@
 "use client";
 
+import Navbar from "@/components/ui/navbar";
 import { useEffect, useState, useRef } from "react";
 
-export default function Home() {
+export default function HomePage() {
   const [socket, setSocket] = useState<WebSocket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [messages, setMessages] = useState<any[]>([]);
@@ -60,71 +61,68 @@ export default function Home() {
   };
 
   return (
-    <div className="w-full min-h-screen bg-primary p-6 flex flex-col gap-6">
-      {/* Header */}
-      <div className="flex justify-end">
-        <div className="flex items-center bg-neutral-white text-neutral-black gap-2 px-4 py-2 rounded-full shadow">
-          <span>Username</span>
-          <div className="w-7 h-7 bg-amber-600 rounded-full">{/* img */}</div>
+    <>
+      <Navbar />
+      <div className="w-full min-h-screen bg-primary p-6 flex flex-col gap-6">
+        
+
+        {/* Connection Status */}
+        <div className="flex items-center gap-2">
+          <div
+            className={`w-3 h-3 rounded-full ${
+              isConnected ? "bg-green-500" : "bg-red-500"
+            }`}
+          ></div>
+          <span className="text-sm">
+            {isConnected ? "Connected" : "Disconnected"}
+          </span>
+        </div>
+
+        {/* Online Users */}
+        <h2 className="text-lg font-semibold">Online user</h2>
+        <div className="flex items-center gap-4">
+          {/* Empty avatar placeholders */}
+          {Array.from({ length: 7 }).map((_, i) => (
+            <div
+              key={i}
+              className="w-30 h-30 bg-neutral-white rounded-full shadow-md"
+            ></div>
+          ))}
+        </div>
+
+        {/* Joined Chat */}
+        <h2 className="text-lg font-semibold mt-4">Joined chat</h2>
+        <div className="flex flex-col gap-4">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div
+              key={i}
+              className="w-full p-4 rounded-xl flex justify-between items-center shadow bg-neutral-white text-neutral-black"
+            >
+              <span className="text-base">ธรรมะยามเช้า (48)</span>
+              <button className="px-6 py-2 rounded-full bg-neutral-black text-neutral-white">
+                เข้าร่วม
+              </button>
+            </div>
+          ))}
+        </div>
+
+        {/* Public Chat */}
+        <h2 className="text-lg font-semibold mt-4">Public chat</h2>
+        <div className="flex flex-col gap-4">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div
+              key={i}
+              className="w-full p-4 rounded-xl flex justify-between items-center shadow bg-neutral-white text-neutral-black"
+            >
+              <span className="text-base">ธรรมะยามเช้า (48)</span>
+              <button className="px-6 py-2 rounded-full bg-neutral-black text-neutral-white">
+                เข้าร่วม
+              </button>
+            </div>
+          ))}
         </div>
       </div>
-
-      {/* Connection Status */}
-      <div className="flex items-center gap-2">
-        <div
-          className={`w-3 h-3 rounded-full ${
-            isConnected ? "bg-green-500" : "bg-red-500"
-          }`}
-        ></div>
-        <span className="text-sm">
-          {isConnected ? "Connected" : "Disconnected"}
-        </span>
-      </div>
-
-      {/* Online Users */}
-      <h2 className="text-lg font-semibold">Online user</h2>
-      <div className="flex items-center gap-4">
-        {/* Empty avatar placeholders */}
-        {Array.from({ length: 7 }).map((_, i) => (
-          <div
-            key={i}
-            className="w-30 h-30 bg-neutral-white rounded-full shadow-md"
-          ></div>
-        ))}
-      </div>
-
-      {/* Joined Chat */}
-      <h2 className="text-lg font-semibold mt-4">Joined chat</h2>
-      <div className="flex flex-col gap-4">
-        {Array.from({ length: 3 }).map((_, i) => (
-          <div
-            key={i}
-            className="w-full p-4 rounded-xl flex justify-between items-center shadow bg-neutral-white text-neutral-black"
-          >
-            <span className="text-base">ธรรมะยามเช้า (48)</span>
-            <button className="px-6 py-2 rounded-full bg-neutral-black text-neutral-white">
-              เข้าร่วม
-            </button>
-          </div>
-        ))}
-      </div>
-
-      {/* Public Chat */}
-      <h2 className="text-lg font-semibold mt-4">Public chat</h2>
-      <div className="flex flex-col gap-4">
-        {Array.from({ length: 3 }).map((_, i) => (
-          <div
-            key={i}
-            className="w-full p-4 rounded-xl flex justify-between items-center shadow bg-neutral-white text-neutral-black"
-          >
-            <span className="text-base">ธรรมะยามเช้า (48)</span>
-            <button className="px-6 py-2 rounded-full bg-neutral-black text-neutral-white">
-              เข้าร่วม
-            </button>
-          </div>
-        ))}
-      </div>
-    </div>
+    </>
   );
 }
 
