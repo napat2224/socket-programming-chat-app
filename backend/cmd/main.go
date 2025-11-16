@@ -96,9 +96,9 @@ func main() {
 	}
 
 	// Initialize repository
-	userRepo := repository.NewUserRepository(app.database, cfg.MongoDBName)
-	roomRepo := repository.NewMongoRoomRepository(app.database, cfg.MongoDBName)
-	messageRepo := repository.NewMongoMessageRepository(app.database, cfg.MongoDBName)
+	userRepo := repository.NewUserRepository(app.database, cfg.UserCollectionName)
+	roomRepo := repository.NewMongoRoomRepository(app.database, cfg.RoomCollectionName)
+	messageRepo := repository.NewMongoMessageRepository(app.database, cfg.MassageCollectionName)
 
 	// Initialize service here
 	authClient := services.InitFirebase(context.Background(), cfg.FirebaseAccountKeyFile)
