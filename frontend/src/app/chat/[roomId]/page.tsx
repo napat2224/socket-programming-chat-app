@@ -15,17 +15,17 @@ export default function ChatRoomPage() {
     const { isConnected, sendMessage, addMessageHandler } = useWebSocket();
     const [theme, setTheme] = useState<ThemeProps>(chatThemes["1"]);
     const [messages, setMesssages] = useState<MessageProps[]>([]);
-    const [isReply, setIsReply] = useState("");
     const userId = "HVUHBTjrFqVV89zwziLqrQthFVz2";
 
-    useEffect(() => {
-        sendMessage({
-            type: "join_room",
-            data: {
-                roomId: roomId
-            }
-        })
-    }, []);
+  useEffect(() => {
+    if (!roomId) return;
+    if (!isConnected) return;
+
+    sendMessage({
+      type: "join_room",
+      data: { roomId },
+    });
+  }, [roomId, isConnected, sendMessage]);
 
     useEffect(() => {
         const removeHandler = addMessageHandler((msg: WsMessage) => {
@@ -51,8 +51,10 @@ export default function ChatRoomPage() {
             }
         });
 
-        return () => { removeHandler(); };
-    }, [addMessageHandler]);
+    return () => {
+      removeHandler();
+    };
+  }, [addMessageHandler]);
 
     return (
         <div className="flex flex-col w-screen h-screen">
@@ -90,154 +92,159 @@ export default function ChatRoomPage() {
 }
 
 const mockmemberlist: MemberProps[] = [
-    {
-        id:"user-1",
-        profile: 1,
-        name: "John"
-    },
-    {
-        id:"user-2",
-        profile: 2,
-        name: "Sarah"
-    },
-    {
-        id:"user-3",
-        profile: 3,
-        name: "Prim"
-    },
-]
+  {
+    id: "user-1",
+    profile: 1,
+    name: "John",
+  },
+  {
+    id: "user-2",
+    profile: 2,
+    name: "Sarah",
+  },
+  {
+    id: "user-3",
+    profile: 3,
+    name: "Prim",
+  },
+];
 
-const mockmessage:MessageProps[] = [
-    {
-        id: "ms-1",
-        roomId: "room-1",
-        senderId: "user-1",
-        senderProfile: 1,
-        senderName: "John",
-        content: "Hi everyoneeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
-        replyTo: null,
-        reactions: ["love", "like", "love", "laugh"],
-        createdAt: "2025-11-16 07:00:00"
-    },
-    {
-        id: "ms-2",
-        roomId: "room-1",
-        senderId: "user-2",
-        senderProfile: 3,
-        senderName: "Prim",
-        content: "สวัสดีทุกคน",
-        replyTo: null,
-        reactions: ["love", "like", "love", "laugh"],
-        createdAt: "2025-11-16 07:01:00"
-    },
-    {
-        id: "ms-3",
-        roomId: "room-1",
-        senderId: "user-3",
-        senderProfile: 2,
-        senderName: "Sarah",
-        content: "Wa-ngai",
-        replyTo: null,
-        reactions: [],
-        createdAt: "2025-11-16 07:01:30"
-    },
-    {
-        id: "ms-1",
-        roomId: "room-1",
-        senderId: "user-1",
-        senderProfile: 1,
-        senderName: "John",
-        content: "Hi everyoneeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
-        replyTo: null,
-        reactions: [],
-        createdAt: "2025-11-16 07:00:00"
-    },
-    {
-        id: "ms-2",
-        roomId: "room-1",
-        senderId: "user-2",
-        senderProfile: 3,
-        senderName: "Prim",
-        content: "สวัสดีทุกคน",
-        replyTo: null,
-        reactions: [],
-        createdAt: "2025-11-16 07:01:00"
-    },
-    {
-        id: "ms-3",
-        roomId: "room-1",
-        senderId: "user-3",
-        senderProfile: 2,
-        senderName: "Sarah",
-        content: "Wa-ngai",
-        replyTo: null,
-        reactions: [],
-        createdAt: "2025-11-16 07:01:30"
-    },
-    {
-        id: "ms-1",
-        roomId: "room-1",
-        senderId: "user-1",
-        senderProfile: 1,
-        senderName: "John",
-        content: "Hi everyoneeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
-        replyTo: "You นั่นแหลttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt",
-        reactions: [],
-        createdAt: "2025-11-16 07:00:00"
-    },
-    {
-        id: "ms-2",
-        roomId: "room-1",
-        senderId: "user-2",
-        senderProfile: 1,
-        senderName: "Prim",
-        content: "สวัสดีทุกคน",
-        replyTo: "จ้าาส์",
-        reactions: [],
-        createdAt: "2025-11-16 07:01:00"
-    },
-    {
-        id: "ms-3",
-        roomId: "room-1",
-        senderId: "user-3",
-        senderProfile: 1,
-        senderName: "Sarah",
-        content: "Wa-ngai",
-        replyTo: null,
-        reactions: [],
-        createdAt: "2025-11-16 07:01:30"
-    },
-    {
-        id: "ms-1",
-        roomId: "room-1",
-        senderId: "user-1",
-        senderProfile: 1,
-        senderName: "John",
-        content: "Hi everyoneeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
-        replyTo: null,
-        reactions: [],
-        createdAt: "2025-11-16 07:00:00"
-    },
-    {
-        id: "ms-2",
-        roomId: "room-1",
-        senderId: "user-2",
-        senderProfile: 1,
-        senderName: "Prim",
-        content: "สวัสดีทุกคน",
-        replyTo: null,
-        reactions: [],
-        createdAt: "2025-11-16 07:01:00"
-    },
-    {
-        id: "ms-3",
-        roomId: "room-1",
-        senderId: "user-3",
-        senderProfile: 1,
-        senderName: "Sarah",
-        content: "Wa-ngai",
-        replyTo: null,
-        reactions: [],
-        createdAt: "2025-11-16 07:01:30"
-    },
+const mockmessage: MessageProps[] = [
+  {
+    id: "ms-1",
+    roomId: "room-1",
+    senderId: "user-1",
+    senderProfile: 1,
+    senderName: "John",
+    content:
+      "Hi everyoneeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+    replyTo: null,
+    reactions: ["love", "like", "love", "laugh"],
+    createdAt: "2025-11-16 07:00:00",
+  },
+  {
+    id: "ms-2",
+    roomId: "room-1",
+    senderId: "user-2",
+    senderProfile: 3,
+    senderName: "Prim",
+    content: "สวัสดีทุกคน",
+    replyTo: null,
+    reactions: ["love", "like", "love", "laugh"],
+    createdAt: "2025-11-16 07:01:00",
+  },
+  {
+    id: "ms-3",
+    roomId: "room-1",
+    senderId: "user-3",
+    senderProfile: 2,
+    senderName: "Sarah",
+    content: "Wa-ngai",
+    replyTo: null,
+    reactions: [],
+    createdAt: "2025-11-16 07:01:30",
+  },
+  {
+    id: "ms-1",
+    roomId: "room-1",
+    senderId: "user-1",
+    senderProfile: 1,
+    senderName: "John",
+    content:
+      "Hi everyoneeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+    replyTo: null,
+    reactions: [],
+    createdAt: "2025-11-16 07:00:00",
+  },
+  {
+    id: "ms-2",
+    roomId: "room-1",
+    senderId: "user-2",
+    senderProfile: 3,
+    senderName: "Prim",
+    content: "สวัสดีทุกคน",
+    replyTo: null,
+    reactions: [],
+    createdAt: "2025-11-16 07:01:00",
+  },
+  {
+    id: "ms-3",
+    roomId: "room-1",
+    senderId: "user-3",
+    senderProfile: 2,
+    senderName: "Sarah",
+    content: "Wa-ngai",
+    replyTo: null,
+    reactions: [],
+    createdAt: "2025-11-16 07:01:30",
+  },
+  {
+    id: "ms-1",
+    roomId: "room-1",
+    senderId: "user-1",
+    senderProfile: 1,
+    senderName: "John",
+    content:
+      "Hi everyoneeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+    replyTo:
+      "You นั่นแหลttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt",
+    reactions: [],
+    createdAt: "2025-11-16 07:00:00",
+  },
+  {
+    id: "ms-2",
+    roomId: "room-1",
+    senderId: "user-2",
+    senderProfile: 1,
+    senderName: "Prim",
+    content: "สวัสดีทุกคน",
+    replyTo: "จ้าาส์",
+    reactions: [],
+    createdAt: "2025-11-16 07:01:00",
+  },
+  {
+    id: "ms-3",
+    roomId: "room-1",
+    senderId: "user-3",
+    senderProfile: 1,
+    senderName: "Sarah",
+    content: "Wa-ngai",
+    replyTo: null,
+    reactions: [],
+    createdAt: "2025-11-16 07:01:30",
+  },
+  {
+    id: "ms-1",
+    roomId: "room-1",
+    senderId: "user-1",
+    senderProfile: 1,
+    senderName: "John",
+    content:
+      "Hi everyoneeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+    replyTo: null,
+    reactions: [],
+    createdAt: "2025-11-16 07:00:00",
+  },
+  {
+    id: "ms-2",
+    roomId: "room-1",
+    senderId: "user-2",
+    senderProfile: 1,
+    senderName: "Prim",
+    content: "สวัสดีทุกคน",
+    replyTo: null,
+    reactions: [],
+    createdAt: "2025-11-16 07:01:00",
+  },
+  {
+    id: "ms-3",
+    roomId: "room-1",
+    senderId: "user-3",
+    senderProfile: 1,
+    senderName: "Sarah",
+    content: "Wa-ngai",
+    replyTo: null,
+    reactions: [],
+    createdAt: "2025-11-16 07:01:30",
+  },
 ];
