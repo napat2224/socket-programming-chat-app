@@ -112,7 +112,6 @@ func main() {
 	authMid := middleware.NewAuthMiddleware(authService)
 
 	// ws hub
-	hub := chatWs.NewHub()
 	router.SetupRoutes(
 		app.app,
 		authMid,
