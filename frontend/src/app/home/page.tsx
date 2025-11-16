@@ -5,6 +5,7 @@ import { auth } from "@/lib/firebase/firebase";
 import { useAuth } from "@/context/authContext";
 import { useRouter } from "next/navigation";
 import { useWebSocket, WsMessage } from "@/context/wsContext";
+import Image from "next/image";
 
 interface Room {
   roomId: string;
@@ -141,6 +142,7 @@ export default function Home() {
                 handlePrivateChat(user.userId);
               }}
             >
+              {/* <Image src={user.profile} /> */}
               {user.name}
             </div>
           ))
