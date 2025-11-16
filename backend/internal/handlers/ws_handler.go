@@ -208,9 +208,10 @@ func (h *WsHandler) handleCreateRoom(conn *ws.Connection, envelope ws.WsMessage)
 	room, err := h.chatService.CreateRoom(
 		context.Background(),
 		creatorId,
-		nil,
+		[]string{},
 		in.ChatName,
 		in.Background,
+		true,
 	)
 	if err != nil {
 		log.Println("[ws] failed to create room:", err)
