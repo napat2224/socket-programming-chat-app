@@ -1,20 +1,12 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback } from "react";
-import { auth } from "@/lib/firebase/firebase";
-import { useAuth } from "@/context/authContext";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useWebSocket, WsMessage } from "@/context/wsContext";
 
-interface WsMessage {
-  type: string;
-  status?: string;
-  data: any;
-}
-
 export default function CreateRoom() {
   const [roomName, setRoomName] = useState("");
-  const [selectedColor, setSelectedColor] = useState<number>("0");
+  const [selectedColor, setSelectedColor] = useState<string>("blue");
   const { isConnected, sendMessage, addMessageHandler } = useWebSocket();
   const [isCreating, setIsCreating] = useState(false);
   const router = useRouter();
