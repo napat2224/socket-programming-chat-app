@@ -11,13 +11,13 @@ type Config struct {
 	MongoDBName            string
 	FirebaseAccountKeyFile string
 	UserCollectionName     string
-	ChatCollectionName     string
+	MassageCollectionName     string
 	RoomCollectionName     string
 }
 
 const (
 	dbName             = "chatdb"
-	chatCollectionName = "chats"
+	messageCollectionName = "message"
 	roomCollectionName = "rooms"
 	userCollectionName = "users"
 )
@@ -27,7 +27,7 @@ func LoadConfig() *Config {
 		Port:                   env.GetString("PORT", "8080"),
 		MongoURI:               env.GetString("MONGO_URI", "mongodb://localhost:27017"),
 		MongoDBName:            dbName,
-		ChatCollectionName:     chatCollectionName,
+		MassageCollectionName:  messageCollectionName,
 		RoomCollectionName:     roomCollectionName,
 		UserCollectionName:     userCollectionName,
 		FirebaseAccountKeyFile: env.GetString("FIREBASE_KEY_PATH", "firebase-key.json"),

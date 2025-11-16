@@ -17,16 +17,12 @@ type Room struct {
 type BackgroundColor string
 
 const (
-	ColorRed    BackgroundColor = "red"
-	ColorBlue   BackgroundColor = "blue"
-	ColorGreen  BackgroundColor = "green"
-	ColorYellow BackgroundColor = "yellow"
-	ColorPurple BackgroundColor = "purple"
-	ColorPink   BackgroundColor = "pink"
-	ColorTeal   BackgroundColor = "teal"
-	ColorOrange BackgroundColor = "orange"
-	ColorGray   BackgroundColor = "gray"
-	ColorBlack  BackgroundColor = "black"
+	ColorRed    BackgroundColor = "1"
+	ColorBlue   BackgroundColor = "2"
+	ColorGreen  BackgroundColor = "3"
+	ColorYellow BackgroundColor = "4"
+	ColorPurple BackgroundColor = "5"
+	ColorPink   BackgroundColor = "6"
 )
 
 func CreateRoom(id, creatorID, roomName, backgroundColor string, memberIDs []string, lastMessageSent time.Time, isPublic bool) *Room {

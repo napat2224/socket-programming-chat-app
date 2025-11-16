@@ -35,11 +35,16 @@ func (m *MessageModel) ToDomain() *domain.Message {
 }
 
 func MessageToModel(msg *domain.Message) (*MessageModel, error) {
-	// Convert string → ObjectID
-	id, err := primitive.ObjectIDFromHex(msg.ID)
-	if err != nil {
-		return nil, err
-	}
+	var id primitive.ObjectID
+    var err error
+    if msg.ID == "" {
+        id = primitive.NewObjectID()
+    } else {
+        id, err = primitive.ObjectIDFromHex(msg.ID)
+        if err != nil {
+            return nil, err
+        }
+    }
 
 	roomId, err := primitive.ObjectIDFromHex(msg.RoomID)
 	if err != nil {
