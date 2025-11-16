@@ -1,0 +1,90 @@
+@startuml Socket Chat App - Minimal Architecture
+
+skinparam componentStyle rectangle
+skinparam defaultTextAlignment center
+
+skinparam package {
+    BackgroundColor<<frontend>> LightBlue
+    BackgroundColor<<backend>> LightGreen
+    BorderColor Black
+}
+
+skinparam cloud {
+    BackgroundColor LightGray
+    BorderColor Black
+}
+
+skinparam database {
+    BackgroundColor LightCoral
+    BorderColor Black
+}
+
+title Socket Programming Chat App - Core Architecture
+
+' External Services
+cloud "Firebase\nAuthentication" as Firebase
+database "MongoDB" as MongoDB
+
+' Frontend
+package "Frontend\n(Next.js + React)" <<frontend>> {
+    component [Pages & UI] as UI
+    component [WebSocket\nClient] as WSClient
+    component [HTTP Client\n(API Layer)] as HTTPClient
+}
+
+' Backend
+package "Backend\n(Go + Fiber)" <<backend>> {
+    component [REST API\nEndpoints] as REST
+    component [WebSocket\nEndpoint] as WSEndpoint
+    component [WebSocket\nHub] as Hub
+    component [Chat\nService] as ChatService
+    component [Repositories] as Repos
+}
+
+' Communication Flows
+UI --> HTTPClient
+UI --> WSClient
+
+HTTPClient -[#blue]-> REST : "HTTP/REST\n(User, Rooms)"
+WSClient -[#red]-> WSEndpoint : "WebSocket\n(Real-time Chat)"
+
+REST --> Firebase : "Verify JWT"
+WSEndpoint --> Firebase : "Verify JWT"
+
+WSEndpoint --> Hub : "Register\nConnection"
+Hub --> ChatService : "Process\nMessages"
+REST --> ChatService : "CRUD\nOperations"
+
+ChatService --> Repos
+Repos --> MongoDB : "Persist Data"
+
+Hub .[#red].> WSClient : "Broadcast\nMessages"
+
+note right of Firebase
+  JWT Token
+  Validation
+end note
+
+note right of MongoDB
+  Collections:
+  • users
+  • rooms
+  • messages
+end note
+
+note bottom of Hub
+  Core WebSocket Engine:
+  • Connection pool
+  • Room management
+  • Real-time broadcast
+end note
+
+legend bottom
+  |<#blue>     | HTTP/REST Protocol |
+  |<#red>     | WebSocket Protocol |
+  Solid: Request/Response
+  Dotted: Bidirectional Real-time
+endlegend
+
+@enduml
+

@@ -43,7 +43,7 @@ func (r *MessageRepository) SaveMessage(ctx context.Context, message *domain.Mes
 	}
 
 	message.ID = oid.Hex()
-	return message, nil
+	return model.ToDomain(), nil
 }
 
 func (r *MessageRepository) FindMessagesByRoomID(ctx context.Context, roomID string) ([]*domain.Message, error) {
@@ -71,4 +71,37 @@ func (r *MessageRepository) FindMessagesByRoomID(ctx context.Context, roomID str
 	}
 
 	return domainMessages, nil
+}
+
+func (r *MessageRepository) AddReaction(
+	ctx context.Context,
+	messageID string,
+	reaction domain.ReactionType,
+) (*domain.Message, error) {
+	oid, err := primitive.ObjectIDFromHex(messageID)
+	if err != nil {
+		return nil, err
+	}
+
+	filter := bson.M{"_id": oid}
+	update := bson.M{
+		"$push": bson.M{
+			"reactions": string(reaction),
+		},
+	}
+
+	res, err := r.collection.UpdateOne(ctx, filter, update)
+	if err != nil {
+		return nil, err
+	}
+	if res.MatchedCount == 0 {
+		return nil, mongo.ErrNoDocuments
+	}
+
+	var model models.MessageModel
+	if err := r.collection.FindOne(ctx, filter).Decode(&model); err != nil {
+		return nil, err
+	}
+
+	return model.ToDomain(), nil
 }

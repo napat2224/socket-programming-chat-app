@@ -1,16 +1,13 @@
 "use client";
 
 import Navbar from "@/components/ui/navbar";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { auth } from "@/lib/firebase/firebase";
 import { useAuth } from "@/context/authContext";
 import { useRouter } from "next/navigation";
-
-interface OnlineUser {
-  userId: string;
-  name: string;
-  profile: number;
-}
+import { useWebSocket, WsMessage } from "@/context/wsContext";
+import Image from "next/image";
+import { avatars } from "@/types/avatar";
 
 interface Room {
   roomId: string;
@@ -18,24 +15,17 @@ interface Room {
   chatName: string;
   userId: string[];
   background: string;
-}
-
-interface WsMessage {
-  type: string;
-  status?: string;
-  data: any;
+  isJoined: boolean;
 }
 
 export default function Home() {
   const { name: currentUserName } = useAuth();
-  const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
+  const { isConnected, onlineUsers, sendMessage, addMessageHandler } =
+    useWebSocket();
   const [rooms, setRooms] = useState<Room[]>([]);
-  const [isConnected, setIsConnected] = useState(false);
-  const wsRef = useRef<WebSocket | null>(null);
-
   const router = useRouter();
 
-  const fetchPublicRooms = async () => {
+  const fetchPublicRooms = useCallback(async () => {
     try {
       const token = await auth.currentUser?.getIdToken();
       const apiUrl =
@@ -55,176 +45,75 @@ export default function Home() {
             roomId: room.id,
             createdBy: room.creatorId,
             chatName: room.roomName,
-            userId: Array(room.memberNumber).fill("member"), // or leave it empty and fetch member list later
+            userId: Array(room.memberNumber).fill("member"),
             background: room.backgroundColor,
+            isJoined: room.isJoined,
           }))
         );
       }
     } catch (err) {
       console.error("Failed to load public rooms:", err);
     }
+  }, []);
+
+  const handlePrivateChat = async (targetUserId: string) => {
+    try {
+      const token = await auth.currentUser?.getIdToken();
+      const currentUser = auth.currentUser?.uid;
+      if (!currentUser) return;
+
+      const apiUrl =
+        process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
+
+      // Call backend to get or create private room
+      const res = await fetch(`${apiUrl}/api/rooms/private/${targetUserId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to fetch private room");
+      }
+
+      const json = await res.json();
+      const roomId = json.data.id;
+
+      // Navigate to chat
+      router.push(`/chat/private/${roomId}`);
+    } catch (error) {
+      console.error("Error opening private chat:", error);
+      alert("Failed to open private chat. Please try again.");
+    }
   };
 
   useEffect(() => {
-    const connectWebSocket = async () => {
-      try {
-        // Get Firebase auth token
-        const currentUser = auth.currentUser;
-        if (!currentUser) {
-          console.error("User not authenticated");
-          return;
-        }
-
-        const token = await currentUser.getIdToken();
-        const apiUrl =
-          process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
-        const wsUrl = apiUrl
-          .replace("http://", "ws://")
-          .replace("https://", "wss://");
-
-        // Connect to WebSocket with auth token (backend expects /ws endpoint)
-        const ws = new WebSocket(`${wsUrl}/ws?token=${token}`);
-
-        ws.onopen = () => {
-          console.log("WebSocket connected");
-          setIsConnected(true);
-          wsRef.current = ws;
-
-          // Load all public rooms from backend
-          fetchPublicRooms();
-        };
-
-        ws.onmessage = (event) => {
-          try {
-            const message: WsMessage = JSON.parse(event.data);
-            console.log("Received message:", message);
-
-            // Handle presence snapshot (initial list of online users)
-            if (message.type === "presence_snapshot") {
-              const snapshotData =
-                typeof message.data === "string"
-                  ? JSON.parse(message.data)
-                  : message.data;
-
-              if (snapshotData.users && Array.isArray(snapshotData.users)) {
-                setOnlineUsers(snapshotData.users);
-              }
-            }
-
-            // Handle user presence updates (user going online/offline)
-            if (message.type === "user_presence") {
-              const presenceData =
-                typeof message.data === "string"
-                  ? JSON.parse(message.data)
-                  : message.data;
-
-              if (message.status === "online") {
-                // Add or update user in the list
-                setOnlineUsers((prev) => {
-                  const exists = prev.find(
-                    (u) => u.userId === presenceData.userId
-                  );
-                  if (exists) {
-                    return prev.map((u) =>
-                      u.userId === presenceData.userId
-                        ? {
-                            userId: presenceData.userId,
-                            name: presenceData.name,
-                            profile: presenceData.profile,
-                          }
-                        : u
-                    );
-                  }
-                  return [
-                    ...prev,
-                    {
-                      userId: presenceData.userId,
-                      name: presenceData.name,
-                      profile: presenceData.profile,
-                    },
-                  ];
-                });
-              } else if (message.status === "offline") {
-                // Remove user from the list
-                setOnlineUsers((prev) =>
-                  prev.filter((u) => u.userId !== presenceData.userId)
-                );
-              }
-            }
-
-            // Handle room creation (broadcasted to all users)
-            if (message.type === "create_room") {
-              const roomData =
-                typeof message.data === "string"
-                  ? JSON.parse(message.data)
-                  : message.data;
-
-              console.log("Room created/broadcasted:", roomData);
-
-              setRooms((prev) => {
-                // Check if room already exists (avoid duplicates)
-                const exists = prev.find((r) => r.roomId === roomData.roomId);
-                if (exists) {
-                  return prev;
-                }
-                // Add new room to the list
-                return [
-                  ...prev,
-                  {
-                    roomId: roomData.roomId,
-                    createdBy: roomData.createdBy,
-                    chatName: roomData.chatName,
-                    userId: roomData.userId || [],
-                    background: roomData.background,
-                  },
-                ];
-              });
-            }
-          } catch (error) {
-            console.error("Error parsing message:", error);
-          }
-        };
-
-        ws.onerror = (error) => {
-          console.error("WebSocket error:", error);
-        };
-
-        ws.onclose = () => {
-          console.log("WebSocket disconnected");
-          setIsConnected(false);
-          wsRef.current = null;
-        };
-
-        return () => {
-          if (ws.readyState === WebSocket.OPEN) {
-            ws.close();
-          }
-        };
-      } catch (error) {
-        console.error("Error connecting to WebSocket:", error);
+    // PAGE-SPECIFIC: Handle join_room messages
+    const handleMessage = (message: WsMessage) => {
+      if (message.type === "join_room") {
+        const joinData =
+          typeof message.data === "string"
+            ? JSON.parse(message.data)
+            : message.data;
+        router.push(`/chat/group/${joinData.roomId}`);
       }
     };
 
-    // Wait for auth state to be ready
-    const unsubscribe = auth.onAuthStateChanged((currentUser) => {
-      if (currentUser) {
-        connectWebSocket();
-      }
-    });
+    // Subscribe to WebSocket messages
+    const unsubscribe = addMessageHandler(handleMessage);
 
-    return () => {
-      unsubscribe();
-      if (wsRef.current?.readyState === WebSocket.OPEN) {
-        wsRef.current.close();
-      }
-    };
-  }, []);
+    // Load public rooms when WebSocket connects
+    if (isConnected) {
+      fetchPublicRooms();
+    }
+
+    return unsubscribe;
+  }, [isConnected, addMessageHandler, fetchPublicRooms, router]);
 
   return (
     <>
       <Navbar />
       <div className="w-full min-h-screen bg-primary p-6 flex flex-col gap-6">
-        
         <div className="flex justify-between items-center">
           <h1 className="text-2xl font-bold">Chat Rooms</h1>
           <div className="flex items-center gap-4">
@@ -250,10 +139,24 @@ export default function Home() {
             onlineUsers.map((user) => (
               <div
                 key={user.userId}
-                className="w-16 h-16 bg-neutral-white rounded-full shadow-md flex items-center justify-center text-xs text-neutral-black"
                 title={user.name}
+                className="flex flex-col text-center text-neutral-white"
               >
-                {user.name}
+                <div
+                  className="w-30 h-30 bg-neutral-white rounded-full shadow-md flex items-center justify-center"
+                  onClick={() => {
+                    handlePrivateChat(user.userId);
+                  }}
+                >
+                  <Image
+                    src={avatars[user.profile]}
+                    alt="Profile Avatar"
+                    width={200}
+                    height={200}
+                    className="rounded-full border shadow"
+                  />
+                </div>
+                <div>{user.name}</div>
               </div>
             ))
           ) : (
@@ -277,7 +180,6 @@ export default function Home() {
               <div
                 key={room.roomId}
                 className="w-full p-4 rounded-xl flex justify-between items-center shadow bg-neutral-white text-neutral-black"
-                style={{ borderLeft: `4px solid ${room.background}` }}
               >
                 <div className="flex flex-col">
                   <span className="text-base font-semibold">{room.chatName}</span>
@@ -286,28 +188,31 @@ export default function Home() {
                   </span>
                 </div>
                 <button
-                  className="px-6 py-2 rounded-full bg-secondary text-neutral-white hover:bg-opacity-90 transition-all"
+                  className={`px-6 py-2 rounded-full text-neutral-white transition-all ${
+                    room.isJoined
+                      ? "bg-green-700 hover:bg-green-800"
+                      : "bg-secondary hover:bg-red-300"
+                  }`}
                   onClick={() => {
-                    // Send join_room message via WebSocket
-                    if (
-                      wsRef.current &&
-                      wsRef.current.readyState === WebSocket.OPEN
-                    ) {
-                      const joinMessage = {
+                    // PAGE-SPECIFIC: Already joined → go to chat directly (NO websocket)
+                    if (room.isJoined) {
+                      router.push(`/chat/group/${room.roomId}`);
+                      return;
+                    }
+
+                    // PAGE-SPECIFIC: Not joined → send join websocket message
+                    try {
+                      sendMessage({
                         type: "join_room",
-                        data: {
-                          roomId: room.roomId,
-                          userId: "", // Backend will get userId from connection
-                        },
-                      };
-                      wsRef.current.send(JSON.stringify(joinMessage));
-                      console.log("Joining room:", room.roomId);
-                    } else {
-                      alert("WebSocket not connected. Please wait...");
+                        data: { roomId: room.roomId },
+                      });
+                    } catch (error) {
+                      console.error("Error sending join room message:", error);
+                      alert("Failed to join room. Please try again.");
                     }
                   }}
                 >
-                  เข้าร่วม
+                  {room.isJoined ? "Enter Chat" : "Join"}
                 </button>
               </div>
             ))
