@@ -17,7 +17,7 @@ export default function ChatGroupPage({
     return (
         <div className="flex flex-col w-screen h-screen">
             <Header username="Tungmay" setTheme={setTheme}/>
-            <div className={`flex-1 flex flex-col w-full pt-4 gap-0.5 overflow-y-scroll ${theme.background}`}>
+            <div className={`flex-1 flex flex-col w-full pt-4 gap-1 overflow-y-scroll ${theme.background}`}>
                 {messages.map((m, index) => (
                     <Message
                         key={index}
@@ -52,7 +52,7 @@ const mockmessage:MessageProps[] = [
         senderName: "John",
         content: "Hi everyoneeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
         replyTo: null,
-        reactions: [],
+        reactions: ["love", "like", "love", "laugh"],
         createdAt: "2025-11-16 07:00:00"
     },
     {
@@ -62,7 +62,7 @@ const mockmessage:MessageProps[] = [
         senderName: "Prim",
         content: "สวัสดีทุกคน",
         replyTo: null,
-        reactions: [],
+        reactions: ["love", "like", "love", "laugh"],
         createdAt: "2025-11-16 07:01:00"
     },
     {
@@ -111,7 +111,7 @@ const mockmessage:MessageProps[] = [
         senderId: "user-1",
         senderName: "John",
         content: "Hi everyoneeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
-        replyTo: "You นั่นแหละ",
+        replyTo: "You นั่นแหลttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt",
         reactions: [],
         createdAt: "2025-11-16 07:00:00"
     },
@@ -121,7 +121,7 @@ const mockmessage:MessageProps[] = [
         senderId: "user-2",
         senderName: "Prim",
         content: "สวัสดีทุกคน",
-        replyTo: null,
+        replyTo: "จ้าาส์",
         reactions: [],
         createdAt: "2025-11-16 07:01:00"
     },
