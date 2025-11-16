@@ -11,7 +11,7 @@ type Room struct {
 	RoomName        string          `json:"roomName,omitempty"`
 	BackgroundColor BackgroundColor `json:"backgroundColor,omitempty"`
 	LastMessageSent time.Time       `json:"lastMessageSent,omitempty"`
-	IsPublic        bool            `json:"isPublic,omitempty"`
+	IsPublic        bool            `json:"isPublic"`
 }
 
 type BackgroundColor string

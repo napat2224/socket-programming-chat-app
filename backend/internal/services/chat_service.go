@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/napat2224/socket-programming-chat-app/internal/domain"
@@ -94,11 +95,9 @@ func (s *ChatService) GetAllPublicRooms(ctx context.Context) ([]*domain.Room, er
 }
 
 func (s *ChatService) GetPrivateRoomByTargetID(ctx context.Context, currentUserID string, targetID string) (*domain.Room, error) {
-	room, err := s.roomRepo.GetPrivateRoomByTargetID(ctx, currentUserID, targetID)
-	if err != nil {
-		return nil, err
-	}
+	room, _ := s.roomRepo.GetPrivateRoomByTargetID(ctx, currentUserID, targetID)
 	if room == nil {
+		log.Println("no private room found, creating new one")
 		room = &domain.Room{
 			ID:              "",
 			CreatorID:       currentUserID,
@@ -108,10 +107,13 @@ func (s *ChatService) GetPrivateRoomByTargetID(ctx context.Context, currentUserI
 			LastMessageSent: time.Time{},
 			IsPublic:        false, // create private room by default
 		}
-		room, err = s.roomRepo.SaveRoom(ctx, room)
+		room, err := s.roomRepo.SaveRoom(ctx, room)
 		if err != nil {
+			log.Println("error creating private room:", err)
 			return nil, err
 		}
+		log.Println("private room created:", room)
 	}
+	log.Println("private room found:", room)
 	return room, nil
 }

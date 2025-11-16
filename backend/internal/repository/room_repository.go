@@ -25,6 +25,7 @@ func NewMongoRoomRepository(db *mongo.Database, collectionName string) *RoomRepo
 }
 
 func (r *RoomRepository) SaveRoom(ctx context.Context, room *domain.Room) (*domain.Room, error) {
+	log.Println("saving room:", room)
 	model, err := models.RoomToModel(room)
 	if err != nil {
 		return nil, err
