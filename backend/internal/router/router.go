@@ -3,11 +3,9 @@ package router
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/websocket"
-	fiberws "github.com/gofiber/websocket/v2"
+	"github.com/gofiber/websocket/v2"
 	"github.com/napat2224/socket-programming-chat-app/internal/handlers"
 	"github.com/napat2224/socket-programming-chat-app/internal/middleware"
-	chatWs "github.com/napat2224/socket-programming-chat-app/internal/services/websocket"
 )
 
 func SetupRoutes(
@@ -22,13 +20,13 @@ func SetupRoutes(
 	app.Get(
 		"/ws",
 		authMiddleware.AddClaims,   
-		fiberws.New(wsHandler.Handle), 
+		websocket.New(wsHandler.Handle), 
 	)
 	api := app.Group("/api")
 
 	setupUserRoutes(api, userHandler, authMiddleware)
 	setupTestRouter(api, authMiddleware)
-	setupWebsocketRoutes(app, hub, authMiddleware)
+	// setupWebsocketRoutes(app, hub, authMiddleware)
 }
 
 func setupUserRoutes(api fiber.Router, userHandler *handlers.UserHandler, authMiddleware *middleware.AuthMiddleware) {
@@ -64,24 +62,24 @@ func setupTestRouter(api fiber.Router, authMiddleware *middleware.AuthMiddleware
 
 }
 
-func setupWebsocketRoutes(app *fiber.App, hub *chatWs.Hub, authMiddleware *middleware.AuthMiddleware) {
-	chatWsHandler := handlers.NewChatWSHandler(hub)
+// func setupWebsocketRoutes(app *fiber.App, hub *ws.Hub, authMiddleware *middleware.AuthMiddleware) {
+// 	chatWsHandler := handlers.NewChatWSHandler(hub)
 
-	// WebSocket middleware for /ws/chat
-	app.Use("/ws/chat", authMiddleware.AddClaims, func(c *fiber.Ctx) error {
-		if websocket.IsWebSocketUpgrade(c) {
-			return c.Next()
-		}
-		return fiber.ErrUpgradeRequired
-	})
+// 	// WebSocket middleware for /ws/chat
+// 	app.Use("/ws/chat", authMiddleware.AddClaims, func(c *fiber.Ctx) error {
+// 		if websocket.IsWebSocketUpgrade(c) {
+// 			return c.Next()
+// 		}
+// 		return fiber.ErrUpgradeRequired
+// 	})
 
-	// WebSocket middleware for /ws/test
-	app.Use("/ws/test", authMiddleware.AddClaims, func(c *fiber.Ctx) error {
-		if websocket.IsWebSocketUpgrade(c) {
-			return c.Next()
-		}
-		return fiber.ErrUpgradeRequired
-	})
+// 	// WebSocket middleware for /ws/test
+// 	app.Use("/ws/test", authMiddleware.AddClaims, func(c *fiber.Ctx) error {
+// 		if websocket.IsWebSocketUpgrade(c) {
+// 			return c.Next()
+// 		}
+// 		return fiber.ErrUpgradeRequired
+// 	})
 
-	chatWsHandler.RegisterRoutes(app)
-}
+// 	chatWsHandler.RegisterRoutes(app)
+// }
