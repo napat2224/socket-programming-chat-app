@@ -4,6 +4,7 @@ import MemberList, { MemberProps } from "@/components/chat/memberList";
 import Message from "@/components/chat/message";
 import MessageInput from "@/components/chat/messageInput";
 import { useWebSocket, WsMessage } from "@/context/wsContext";
+import { auth } from "@/lib/firebase/firebase";
 import { MessageProps } from "@/types/chat";
 import { chatThemes, ThemeProps } from "@/types/chatThemes";
 import { useParams } from "next/navigation";
@@ -16,7 +17,7 @@ export default function ChatRoomPage() {
     const [theme, setTheme] = useState<ThemeProps>(chatThemes["1"]);
     const [messages, setMesssages] = useState<MessageProps[]>([]);
     const [isReply, setIsReply] = useState("");
-    const userId = "HVUHBTjrFqVV89zwziLqrQthFVz2";
+    const userId = auth.currentUser?.uid;
 
   useEffect(() => {
     if (!roomId) return;

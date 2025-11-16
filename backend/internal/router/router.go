@@ -46,7 +46,7 @@ func setupChatRoutes(api fiber.Router, chatHandler *handlers.ChatHandler, authMi
 	rooms.Get("/private/:targetID", authMiddleware.AddClaims, chatHandler.GetPrivateRoomByTargetID)
 	rooms.Get("/:roomID/messages", authMiddleware.AddClaims, chatHandler.GetMessagesByRoomID)
 	rooms.Get("/:roomID", authMiddleware.AddClaims, chatHandler.GetChatRoomByRoomID)
-	// rooms.Patch("/:roomID", authMiddleware.AddClaims, chatHandler.UpdateBackgroundRoom)
+	rooms.Patch("/:roomID", authMiddleware.AddClaims, chatHandler.UpdateBackgroundRoom)
 	// chats.Get("/:roomID/messages", r.authMiddleware.AddClaims, r.chatHandler.GetMessagesByRoomID)
 	// chats.Post("/rooms", r.authMiddleware.AddClaims, r.chatHandler.CreateRoom)
 	// chats.Get("/customer/rooms", r.authMiddleware.AddClaims, r.chatHandler.GetChatRoomsByCustomerID)

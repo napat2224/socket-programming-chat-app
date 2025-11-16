@@ -157,25 +157,39 @@ func (r *RoomRepository) JoinRoom(ctx context.Context, roomID string, userID str
 }
 
 func (r *RoomRepository) GetChatRoomsByRoomID(ctx context.Context, roomID string) (*domain.Room, error) {
-	filter := bson.M{"id": roomID}
-
-	room := models.RoomModel{}
-	err := r.collection.FindOne(ctx, filter).Decode(&room)
+	roomOID, err := primitive.ObjectIDFromHex(roomID)
 	if err != nil {
+		log.Printf("[GetChatRoomsByRoomID] invalid roomID %s: %v", roomID, err)
 		return nil, err
 	}
 
-	return room.ToDomain(), nil
+	filter := bson.M{"_id": roomOID}
+
+	roomModel := &models.RoomModel{}
+	if err := r.collection.FindOne(ctx, filter).Decode(roomModel); err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return roomModel.ToDomain(), nil
 }
 
-// func (r *RoomRepository) UpdateRoom(ctx context.Context, roomID string, background string) (*domain.Room, error) {
-// 	filter := bson.M{"id": roomID}
-// 	update := bson.M{"$set": bson.M{"background": background}}
+func (r *RoomRepository) UpdateRoom(ctx context.Context, roomID string, background string) (*domain.Room, error) {
+	roomOID, err := primitive.ObjectIDFromHex(roomID)
+	if err != nil {
+		log.Printf("[GetChatRoomsByRoomID] invalid roomID %s: %v", roomID, err)
+		return nil, err
+	}
 
-// 	opts := options.FindOneAndUpdate().SetReturnDocument(options.After)
-// 	var room domain.Room
-// 	if err := r.collection.FindOneAndUpdate(ctx, filter, update, opts).Decode(&room); err != nil {
-// 		return nil, err
-// 	}
-// 	return &room, nil
-// }
+	filter := bson.M{"_id": roomOID}
+	update := bson.M{"$set": bson.M{"backgroundColor": background}}
+
+	opts := options.FindOneAndUpdate().SetReturnDocument(options.After)
+	var room domain.Room
+	if err := r.collection.FindOneAndUpdate(ctx, filter, update, opts).Decode(&room); err != nil {
+		return nil, err
+	}
+	return &room, nil
+}

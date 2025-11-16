@@ -138,23 +138,27 @@ type UpdateBackgroundResponse struct {
 	BackgroundColor string `json:"backgroundColor"`
 }
 
-// func (s *ChatService) UpdateBackgroundRoom(ctx context.Context, roomID string, background string) (*UpdateBackgroundResponse, error) {
-// 	room, err := s.roomRepo.GetChatRoomsByRoomID(ctx, roomID)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	if room == nil {
-// 		return nil, fmt.Errorf("room not found")
-// 	}
+func (s *ChatService) UpdateBackgroundRoom(ctx context.Context, roomID string, background string) (*UpdateBackgroundResponse, error) {
+	room, err := s.roomRepo.GetChatRoomsByRoomID(ctx, roomID)
+	if err != nil {
+		return nil, err
+	}
+	if room == nil {
+		return nil, fmt.Errorf("room not found")
+	}
 
-// 	room.BackgroundColor = BackgroundColor(background)
+	room.BackgroundColor = BackgroundColor(background)
 
-// 	_, err = s.roomRepo.UpdateRoom(ctx, roomID, background)
-// 	if err != nil {
-// 		return nil, err
-// 	}
+	_, err = s.roomRepo.UpdateRoom(ctx, roomID, background)
+	if err != nil {
+		return nil, err
+	}
 
-// 	return &UpdateBackgroundResponse{
-// 		BackgroundColor: background,
-// 	}, nil
-// }
+	return &UpdateBackgroundResponse{
+		BackgroundColor: background,
+	}, nil
+}
+
+func BackgroundColor(background string) domain.BackgroundColor {
+	return domain.BackgroundColor(background)
+}
