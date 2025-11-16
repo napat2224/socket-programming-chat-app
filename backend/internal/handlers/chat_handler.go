@@ -12,6 +12,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/websocket/v2"
+	"github.com/napat2224/socket-programming-chat-app/internal/domain"
 	"github.com/napat2224/socket-programming-chat-app/internal/services"
 	chatWs "github.com/napat2224/socket-programming-chat-app/internal/services/websocket"
 	"github.com/napat2224/socket-programming-chat-app/internal/utils/env"
@@ -143,9 +144,17 @@ type wsMessage struct {
 func (h *ChatWSHandler) handle(c *websocket.Conn) {
 	claims := c.Locals("claims").(*services.Claims)
 	userID := claims.UserID
+	name := claims.Name
+	profile := domain.ProfileType(claims.Profile)
 
 	conn := chatWs.NewConnection(c)
-	h.hub.AddUser(userID, conn)
+
+		presence := chatWs.UserPresenceData{
+		UserId:  userID,
+		Name:    name,
+		Profile: profile,
+	}
+	h.hub.AddUser(presence, conn)
 	defer func() {
 		h.hub.Remove(conn)
 		conn.Close()
