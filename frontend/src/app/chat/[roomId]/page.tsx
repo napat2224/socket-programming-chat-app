@@ -15,7 +15,7 @@ export default function ChatRoomPage() {
   const params = useParams<{ roomId: string }>();
   const roomId = params.roomId;
   const { isConnected, sendMessage, addMessageHandler } = useWebSocket();
-
+  const [isReply, setIsReply] = useState("");
   const [theme, setTheme] = useState<ThemeProps>(chatThemes["1"]);
   const [messages, setMessages] = useState<MessageProps[]>([]);
   const [members, setMembers] = useState<MemberProps[]>([]);
@@ -24,7 +24,6 @@ export default function ChatRoomPage() {
 
   useEffect(() => {
     if (!roomId) return;
-
     let cancelled = false;
 
     const fetchRoom = async () => {
@@ -112,7 +111,21 @@ export default function ChatRoomPage() {
     const removeHandler = addMessageHandler((msg: WsMessage) => {
       if (msg.type === "message") {
         console.log("New chat message:", msg.data);
-        setMessages((prev) => [...prev, msg.data]);
+        const newMessage = msg.data;
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: newMessage.messageId,
+            roomId: newMessage.roomId,
+            senderId: newMessage.senderId,
+            senderProfile: newMessage.senderProfile,
+            senderName: newMessage.senderName,
+            content: newMessage.content,
+            replyTo: newMessage.replyContent ?? "",
+            reactions: newMessage.reactions ?? [],
+            createdAt: newMessage.createdAt,
+          },
+        ]);
       }
     });
 
@@ -123,41 +136,41 @@ export default function ChatRoomPage() {
 
   return (
     <div className="flex flex-col w-screen h-screen">
-      <Header username={roomName || "Chat"} setTheme={setTheme} />
-
+      <Header username={roomName || ""} setTheme={setTheme} />
       <MemberList
         memberList={members}
         className={`${theme.sendButton} ${theme.text}`}
       />
-
       <div
         className={`flex-1 flex flex-col w-full pt-4 gap-1 overflow-y-scroll ${theme.background}`}
       >
-        {messages.map((m, index) => (
-          <Message
-            key={index}
-            id={m.id}
-            roomId={m.roomId}
-            senderId={m.senderId}
-            senderProfile={m.senderProfile}
-            senderName={m.senderName}
-            content={m.content}
-            replyTo={m.replyTo}
-            reactions={m.reactions}
-            createdAt={m.createdAt}
-            theme={theme}
-            userId={userId}
-            sendMessage={sendMessage}
-            addMessageHandler={addMessageHandler}
-          />
-        ))}
+        {messages.map((m, index) => {
+          return (
+            <Message
+              key={index}
+              id={m.id ?? m.messageId}
+              roomId={m.roomId}
+              senderId={m.senderId}
+              senderProfile={m.senderProfile}
+              senderName={m.senderName}
+              content={m.content}
+              replyTo={m.replyTo}
+              reactions={m.reactions}
+              createdAt={m.createdAt}
+              theme={theme}
+              userId={userId}
+              isReply={isReply}
+              setIsReply={setIsReply}
+            />
+          );
+        })}
       </div>
-
       <MessageInput
         connected={isConnected}
-        sendMessage={sendMessage}
         roomId={roomId}
         theme={theme}
+        isReply={isReply}
+        setIsReply={setIsReply}
       />
     </div>
   );
