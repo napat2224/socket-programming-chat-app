@@ -13,20 +13,19 @@ import (
 type ChatService struct {
 	roomRepo    *repository.RoomRepository
 	messageRepo *repository.MessageRepository
-	userRepo *repository.UserRepository
+	userRepo    *repository.UserRepository
 }
 
-
 type RoomMember struct {
-	ID      string              `json:"id"`
-	Name    string              `json:"name"`
-	Profile domain.ProfileType  `json:"profile"`
+	ID      string             `json:"id"`
+	Name    string             `json:"name"`
+	Profile domain.ProfileType `json:"profile"`
 }
 
 type RoomDetail struct {
-	RoomID   string        `json:"roomId"`
-	RoomName string        `json:"roomName"`
-	Members  []RoomMember  `json:"members"`
+	RoomID   string       `json:"roomId"`
+	RoomName string       `json:"roomName"`
+	Members  []RoomMember `json:"members"`
 }
 
 func NewChatService(
@@ -37,7 +36,7 @@ func NewChatService(
 	return &ChatService{
 		roomRepo:    roomRepo,
 		messageRepo: messageRepo,
-		userRepo: userRepo,
+		userRepo:    userRepo,
 	}
 }
 
@@ -99,6 +98,68 @@ func (s *ChatService) GetRoomMessages(
 	return s.messageRepo.FindMessagesByRoomID(ctx, roomID)
 }
 
+func (s *ChatService) GetRoomMessagesWithUserDetails(
+	ctx context.Context,
+	roomID string,
+) ([]*MessageWithUserDetail, error) {
+	// Get messages
+	messages, err := s.messageRepo.FindMessagesByRoomID(ctx, roomID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Collect unique sender IDs
+	senderIDsMap := make(map[string]bool)
+	for _, msg := range messages {
+		senderIDsMap[msg.SenderID] = true
+	}
+
+	// Convert map to slice
+	senderIDs := make([]string, 0, len(senderIDsMap))
+	for id := range senderIDsMap {
+		senderIDs = append(senderIDs, id)
+	}
+
+	// Fetch all users at once
+	users, err := s.userRepo.GetUsersByIDs(ctx, senderIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	// Create a map for quick user lookup
+	userMap := make(map[string]*domain.User)
+	for _, user := range users {
+		userMap[user.UserID] = user
+	}
+
+	// Build the denormalized response
+	result := make([]*MessageWithUserDetail, 0, len(messages))
+	for _, msg := range messages {
+		user := userMap[msg.SenderID]
+		senderName := "Unknown User"
+		senderProfile := domain.Profile1 // Default profile
+
+		if user != nil {
+			senderName = user.Name
+			senderProfile = user.Profile
+		}
+
+		result = append(result, &MessageWithUserDetail{
+			ID:            msg.ID,
+			RoomID:        msg.RoomID,
+			SenderID:      msg.SenderID,
+			Content:       msg.Content,
+			ReplyTo:       msg.ReplyTo,
+			Reactions:     msg.Reactions,
+			CreatedAt:     msg.CreatedAt.Format(time.RFC3339),
+			SenderName:    senderName,
+			SenderProfile: senderProfile,
+		})
+	}
+
+	return result, nil
+}
+
 func (s *ChatService) GetUserRooms(
 	ctx context.Context,
 	userID string,
@@ -147,35 +208,47 @@ func (s *ChatService) JoinRoom(ctx context.Context, roomID string, userID string
 }
 
 func (s *ChatService) GetChatRoomByRoomID(
-    ctx context.Context,
-    roomID string,
+	ctx context.Context,
+	roomID string,
 ) (*RoomDetail, error) {
-    room, err := s.roomRepo.GetChatRoomsByRoomID(ctx, roomID)
-    if err != nil {
-        return nil, err
-    }
+	room, err := s.roomRepo.GetChatRoomsByRoomID(ctx, roomID)
+	if err != nil {
+		return nil, err
+	}
 
-    users, err := s.userRepo.GetUsersByIDs(ctx, room.MemberIDs)
-    if err != nil {
-        return nil, err
-    }
+	users, err := s.userRepo.GetUsersByIDs(ctx, room.MemberIDs)
+	if err != nil {
+		return nil, err
+	}
 
-    members := make([]RoomMember, 0, len(users))
-    for _, u := range users {
-        members = append(members, RoomMember{
-            ID:      u.UserID,
-            Name:    u.Name,
-            Profile: u.Profile,
-        })
-    }
+	members := make([]RoomMember, 0, len(users))
+	for _, u := range users {
+		members = append(members, RoomMember{
+			ID:      u.UserID,
+			Name:    u.Name,
+			Profile: u.Profile,
+		})
+	}
 
-    return &RoomDetail{
-        RoomID:   room.ID,
-        RoomName: room.RoomName,
-        Members:  members,
-    }, nil
+	return &RoomDetail{
+		RoomID:   room.ID,
+		RoomName: room.RoomName,
+		Members:  members,
+	}, nil
 }
 
+type MessageWithUserDetail struct {
+	ID        string                `json:"id"`
+	RoomID    string                `json:"roomId"`
+	SenderID  string                `json:"senderId"`
+	Content   string                `json:"content"`
+	ReplyTo   string                `json:"replyTo,omitempty"`
+	Reactions []domain.ReactionType `json:"reactions,omitempty"`
+	CreatedAt string                `json:"createdAt"`
+	// User details denormalized
+	SenderName    string             `json:"senderName"`
+	SenderProfile domain.ProfileType `json:"senderProfile"`
+}
 
 type UpdateBackgroundResponse struct {
 	BackgroundColor string `json:"backgroundColor"`

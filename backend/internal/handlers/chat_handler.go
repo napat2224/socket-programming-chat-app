@@ -112,7 +112,7 @@ func (h *ChatHandler) GetChatRoomByRoomID(c *fiber.Ctx) error {
 func (h *ChatHandler) GetMessagesByRoomID(c *fiber.Ctx) error {
 	ctx := context.Background()
 	roomID := c.Params("roomID")
-	messages, error := h.chatService.GetRoomMessages(ctx, roomID)
+	messages, error := h.chatService.GetRoomMessagesWithUserDetails(ctx, roomID)
 	if error != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "failed to get messages by roomID",
