@@ -18,10 +18,16 @@ export default function ChatRoomPage() {
   const { isConnected, sendMessage, addMessageHandler } = useWebSocket();
   const [isReply, setIsReply] = useState("");
   const [theme, setTheme] = useState<ThemeProps>(chatThemes["1"]);
+  const [themeId, setThemeId] = useState<string>("1");
   const [messages, setMessages] = useState<MessageProps[]>([]);
   const [members, setMembers] = useState<MemberProps[]>([]);
   const [roomName, setRoomName] = useState<string | null>(null);
-  const userId = auth.currentUser?.uid;
+  const userId = auth.currentUser?.uid ?? "";
+
+  const handleSetTheme = (newTheme: ThemeProps, newThemeId: string) => {
+    setTheme(newTheme);
+    setThemeId(newThemeId);
+  };
 
   useEffect(() => {
     if (!roomId) return;
@@ -57,7 +63,7 @@ export default function ChatRoomPage() {
       cancelled = true;
     };
   }, [roomId]);
-  
+
   useEffect(() => {
     if (!roomId) return;
     let cancelled = false;
@@ -80,7 +86,7 @@ export default function ChatRoomPage() {
         if (cancelled) return;
 
         setMessages(
-          (mes ?? []).map(m => ({
+          (mes ?? []).map((m) => ({
             ...m,
             senderName: m.senderName ?? "",
             senderProfile: m.senderProfile ?? "",
@@ -102,13 +108,13 @@ export default function ChatRoomPage() {
 
   useEffect(() => {
     if (!roomId) return;
-    if (theme == null) return;
+    if (themeId == null) return;
     let cancelled = false;
 
     const updateBackgroundColor = async () => {
       try {
         const res = await api.patch(`/api/rooms/${roomId}`, {
-          backgroundColor: theme,
+          backgroundColor: themeId,
         });
         if (cancelled) return;
       } catch (err) {
@@ -121,7 +127,7 @@ export default function ChatRoomPage() {
     return () => {
       cancelled = true;
     };
-  }, [roomId, theme]);
+  }, [roomId, themeId]);
 
   useEffect(() => {
     const removeHandler = addMessageHandler((msg: WsMessage) => {
@@ -202,7 +208,7 @@ export default function ChatRoomPage() {
 
   return (
     <div className="flex flex-col w-screen h-screen">
-      <Header username={roomName || ""} setTheme={setTheme} />
+      <Header username={roomName || ""} setTheme={handleSetTheme} />
       <MemberList
         memberList={members}
         className={`${theme.sendButton} ${theme.text}`}
@@ -214,7 +220,7 @@ export default function ChatRoomPage() {
           return (
             <Message
               key={index}
-              id={m.id ?? m.messageId}
+              id={m.id || ""}
               roomId={m.roomId}
               senderId={m.senderId}
               senderProfile={m.senderProfile}
