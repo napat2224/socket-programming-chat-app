@@ -11,18 +11,26 @@ import { useAuth } from "@/context/authContext";
 
 export default function SignInPage() {
   const router = useRouter();
-  const { user, loading } = useAuth();
+  const { user, name, loading } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isSigningIn, setIsSigningIn] = useState(false);
 
-  // Redirect if already logged in
+  // Redirect if already logged in and profile is complete
   useEffect(() => {
     if (!loading && user) {
-      router.replace("/");
+      if (name) {
+        // User has completed profile (has name in context), go to home
+        router.replace("/");
+      } else {
+        // User exists but hasn't completed profile, redirect to profile page
+        user.getIdToken().then((token) => {
+          router.replace(`/profile?token=${encodeURIComponent(token)}`);
+        });
+      }
     }
-  }, [user, loading, router]);
+  }, [user, name, loading, router]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,8 +38,20 @@ export default function SignInPage() {
     setIsSigningIn(true);
     setError("");
     try {
-      await doSignInWithEmailAndPassword(email, password);
-      // Don't manually route - let the useEffect above handle it once auth state updates
+      const userCredential = await doSignInWithEmailAndPassword(
+        email,
+        password
+      );
+      // Get token to check if user has completed profile
+      const token = await userCredential.user.getIdToken();
+      const tokenResult = await userCredential.user.getIdTokenResult();
+
+      // Check if user has name and profile claims (profile completed)
+      if (!tokenResult.claims.name || !tokenResult.claims.profile) {
+        // New user or incomplete profile - redirect to profile page
+        router.replace(`/profile?token=${encodeURIComponent(token)}`);
+      }
+      // Otherwise, let the useEffect handle redirect to home
     } catch (err: Error | unknown) {
       console.error(err);
       setError(err instanceof Error ? err.message : "Sign in failed");
@@ -44,12 +64,21 @@ export default function SignInPage() {
     setIsSigningIn(true);
     setError("");
     try {
-      const { token, isNewUser } = await doSignInWithGoogle();
+      const { user: googleUser, token, isNewUser } = await doSignInWithGoogle();
 
-      if (isNewUser) {
+      // Get token claims to check if profile is complete
+      const tokenResult = await googleUser.getIdTokenResult();
+
+      // Check if user has name and profile claims (profile completed)
+      // Redirect to profile if new user OR if they don't have name/profile claims
+      if (
+        isNewUser ||
+        !tokenResult.claims.name ||
+        !tokenResult.claims.profile
+      ) {
         router.replace(`/profile?token=${encodeURIComponent(token)}`);
       }
-      // For existing users, let the useEffect handle redirect once auth state updates
+      // For existing users with complete profile, let the useEffect handle redirect
     } catch (err: Error | unknown) {
       console.error(err);
       setError("Google sign-in failed");

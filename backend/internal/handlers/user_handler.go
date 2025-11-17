@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"log"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/napat2224/socket-programming-chat-app/internal/domain"
@@ -38,16 +39,17 @@ type RegisterResponse struct {
 }
 
 type CheckUsernameRequest struct {
-    Name string `json:"name" validate:"required"`
+	Name string `json:"name" validate:"required"`
 }
 
 type CheckUsernameResponse struct {
-    Available bool   `json:"available"`
-    Message   string `json:"message,omitempty"`
+	Available bool   `json:"available"`
+	Message   string `json:"message,omitempty"`
 }
 
 func (h *UserHandler) Register(c *fiber.Ctx) error {
 	var req RegisterRequest
+	log.Println("Register called")
 
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(RegisterResponse{
@@ -63,9 +65,13 @@ func (h *UserHandler) Register(c *fiber.Ctx) error {
 		})
 	}
 
-	ctx := context.Background()
+	// Add timeout to prevent hanging
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
 	err := h.userService.Register(ctx, req.IdToken, req.Name, req.Profile)
 	if err != nil {
+		log.Printf("Error registering user: %v", err)
 		return c.Status(fiber.StatusInternalServerError).JSON(RegisterResponse{
 			Success: false,
 			Message: err.Error(),
@@ -107,32 +113,37 @@ func (h *UserHandler) GetMe(c *fiber.Ctx) error {
 }
 
 func (h *UserHandler) CheckUsername(c *fiber.Ctx) error {
-    var req CheckUsernameRequest
+	var req CheckUsernameRequest
+	log.Println("CheckUsername called")
 
-    if err := c.BodyParser(&req); err != nil {
-        return c.Status(fiber.StatusBadRequest).JSON(CheckUsernameResponse{
-            Available: false,
-            Message:   "Invalid request body",
-        })
-    }
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(CheckUsernameResponse{
+			Available: false,
+			Message:   "Invalid request body",
+		})
+	}
 
-    ctx := context.Background()
-    available, err := h.userService.IsUsernameAvailable(ctx, req.Name)
-    if err != nil {
-        return c.Status(fiber.StatusInternalServerError).JSON(CheckUsernameResponse{
-            Available: false,
-            Message:   "Failed to check username",
-        })
-    }
+	// Add timeout to prevent hanging
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
 
-    if !available {
-        return c.Status(fiber.StatusConflict).JSON(CheckUsernameResponse{
-            Available: false,
-            Message:   "username is already taken",
-        })
-    }
+	available, err := h.userService.IsUsernameAvailable(ctx, req.Name)
+	if err != nil {
+		log.Printf("Error checking username availability: %v", err)
+		return c.Status(fiber.StatusInternalServerError).JSON(CheckUsernameResponse{
+			Available: false,
+			Message:   "Failed to check username. Is MongoDB running?",
+		})
+	}
 
-    return c.Status(fiber.StatusOK).JSON(CheckUsernameResponse{
-        Available: true,
-    })
+	if !available {
+		return c.Status(fiber.StatusConflict).JSON(CheckUsernameResponse{
+			Available: false,
+			Message:   "username is already taken",
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(CheckUsernameResponse{
+		Available: true,
+	})
 }

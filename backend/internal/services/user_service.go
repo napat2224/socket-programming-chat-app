@@ -66,14 +66,14 @@ func (s *UserService) GetMe(ctx context.Context, userID string) (*domain.User, e
 }
 
 func (s *UserService) IsUsernameAvailable(ctx context.Context, name string) (bool, error) {
-    name = strings.TrimSpace(name)
-    if name == "" {
-        return false, status.Error(codes.InvalidArgument, "name must not be empty")
-    }
+	name = strings.TrimSpace(name)
+	if name == "" {
+		return false, status.Error(codes.InvalidArgument, "name must not be empty")
+	}
 
-    user, err := s.repo.FindByName(ctx, name)
-    if err != nil {
-        return false, status.Errorf(codes.Internal, "failed to check username uniqueness: %v", err)
-    }
-    return user == nil, nil
+	user, err := s.repo.FindByName(ctx, name)
+	if err != nil {
+		return false, status.Errorf(codes.Internal, "failed to check username uniqueness: %v", err)
+	}
+	return user == nil, nil
 }

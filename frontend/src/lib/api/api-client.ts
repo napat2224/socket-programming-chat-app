@@ -2,23 +2,12 @@
 
 import axios from "axios";
 import { auth } from "@/lib/firebase/firebase";
-import { User } from "firebase/auth";
-
-function waitForUser(): Promise<User> {
-  const u = auth.currentUser;
-  if (u) return Promise.resolve(u);
-  return new Promise((resolve) => {
-    const unsub = auth.onAuthStateChanged((user) => {
-      if (user) {
-        unsub();
-        resolve(user);
-      }
-    });
-  });
-}
 
 async function getValidToken(): Promise<string | undefined> {
-  const user = auth.currentUser ?? (await waitForUser());
+  const user = auth.currentUser;
+  if (!user) {
+    return undefined; // No user logged in, skip auth token
+  }
   try {
     return await user.getIdToken(); // fresh enough; response interceptor refreshes on 401
   } catch {
@@ -28,6 +17,7 @@ async function getValidToken(): Promise<string | undefined> {
 
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080",
+  timeout: 10000, // 10 seconds timeout - fail fast if backend isn't running
 });
 
 api.interceptors.request.use(async (config) => {

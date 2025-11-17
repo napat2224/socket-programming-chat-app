@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { doCreateUserWithEmailAndPassword } from "@/lib/firebase/auth";
 import { toast } from "sonner";
@@ -9,11 +9,11 @@ import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { avatars } from "@/types/avatar";
 import { useAuth } from "@/context/authContext";
+import { useWebSocket } from "@/context/wsContext";
 import axios from "axios";
 
 export default function RegisterPage() {
   const router = useRouter();
-  const { user, loading: authLoading, refreshUser } = useAuth();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -21,13 +21,8 @@ export default function RegisterPage() {
   const [profile, setProfile] = useState<number>(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-
-  // Redirect if already logged in
-  useEffect(() => {
-    if (!authLoading && user) {
-      router.replace("/");
-    }
-  }, [user, authLoading, router]);
+  const { refreshUser } = useAuth();
+  const { reconnect } = useWebSocket();
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,6 +41,7 @@ export default function RegisterPage() {
     setError("");
 
     try {
+      // Step 1: Check username availability
       try {
         const { data } = await api.post<{
           available: boolean;
@@ -76,28 +72,54 @@ export default function RegisterPage() {
         setLoading(false);
         return;
       }
-      // Step 1: Create Firebase user
+
+      // Step 2: Create Firebase user
+      console.log("Creating Firebase user...");
       const cred = await doCreateUserWithEmailAndPassword(email, password);
+      console.log("Firebase user created:", cred.user.uid);
 
-      // Step 2: Get token BEFORE claims are added
+      // Step 3: Get initial token
       const tokenId = await cred.user.getIdToken(true);
-      await refreshUser();
+      console.log("Got initial token");
 
-      // Step 3: Hit your backend register endpoint
-      await api.post("/api/users/register", {
+      // Step 4: Register user in backend (sets custom claims)
+      console.log("Registering user in backend...");
+      const registerResponse = await api.post("/api/users/register", {
         idToken: tokenId,
-        name,
+        name: name.trim(),
         profile,
       });
+      console.log("Backend registration response:", registerResponse.data);
 
-      // Step 4: Refresh token so it contains the NEW claims
-      await cred.user.getIdToken(true); // <= critical part
+      // Step 5: Wait a moment for custom claims to propagate
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      // Step 6: Force refresh token to get new claims
+      console.log("Refreshing token to get custom claims...");
+      await cred.user.getIdToken(true);
+
+      // Step 7: Refresh user context
+      console.log("Refreshing user context...");
       await refreshUser();
-      toast("Registration successful!");
 
-      // Don't manually route - let the useEffect handle it once auth state updates
+      // Step 8: Reconnect WebSocket with new credentials
+      console.log("Reconnecting WebSocket...");
+      reconnect();
+
+      toast.success("Registration successful!");
+      console.log("Navigating to home page...");
+      router.push("/");
     } catch (err: Error | unknown) {
-      setError(err instanceof Error ? err.message : "Registration failed");
+      console.error("Registration error:", err);
+      if (axios.isAxiosError(err)) {
+        const errorMessage =
+          err.response?.data?.message ||
+          err.response?.data?.error ||
+          err.message;
+        setError(errorMessage);
+      } else {
+        setError(err instanceof Error ? err.message : "Registration failed");
+      }
     } finally {
       setLoading(false);
     }
