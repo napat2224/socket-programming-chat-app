@@ -46,11 +46,6 @@ export default function SignInPage() {
       const token = await userCredential.user.getIdToken();
       const tokenResult = await userCredential.user.getIdTokenResult();
 
-      // Check if user has name and profile claims (profile completed)
-      if (!tokenResult.claims.name || !tokenResult.claims.profile) {
-        // New user or incomplete profile - redirect to profile page
-        router.replace(`/profile?token=${encodeURIComponent(token)}`);
-      }
       // Otherwise, let the useEffect handle redirect to home
     } catch (err: Error | unknown) {
       console.error(err);
