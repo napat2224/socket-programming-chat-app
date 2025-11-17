@@ -2,6 +2,7 @@ package websocket
 
 import (
 	"encoding/json"
+	"time"
 
 	domain "github.com/napat2224/socket-programming-chat-app/internal/domain"
 )
@@ -31,12 +32,12 @@ type WsMessage struct {
 }
 
 type UserPresenceData struct {
-	UserId  string      `json:"userId"`
-	Name    string      `json:"name"`
+	UserId  string             `json:"userId"`
+	Name    string             `json:"name"`
 	Profile domain.ProfileType `json:"profile,omitempty"`
 }
 
-type UserOfflineData struct{
+type UserOfflineData struct {
 	UserId string `json:"userId"`
 }
 
@@ -51,39 +52,40 @@ type IncomingTextData struct {
 }
 
 type OutgoingTextData struct {
-	MessageId     string      `json:"messageId"`
-	SenderId      string      `json:"senderId"`
-	Content       string      `json:"content"`
-	RoomId        string      `json:"roomId"`
-	ReplyContent  *string     `json:"replyContent"`
-	SenderName    string      `json:"senderName"`
-	Reactions []domain.ReactionType `json:"reactions"`
-	SenderProfile domain.ProfileType `json:"senderProfile,omitempty"`
+	MessageId     string                `json:"messageId"`
+	SenderId      string                `json:"senderId"`
+	Content       string                `json:"content"`
+	RoomId        string                `json:"roomId"`
+	ReplyContent  *string               `json:"replyContent"`
+	SenderName    string                `json:"senderName"`
+	Reactions     []domain.ReactionType `json:"reactions"`
+	SenderProfile domain.ProfileType    `json:"senderProfile,omitempty"`
+	CreatedAt     time.Time             `json:"createdAt"`
 }
 
 type IncomingReactData struct {
-	MessageId string `json:"messageId"`
+	MessageId string              `json:"messageId"`
 	ReactType domain.ReactionType `json:"reactType"`
 }
 
 type OutgoingReactData struct {
-	MessageId string `json:"messageId"`
+	MessageId string              `json:"messageId"`
 	ReactType domain.ReactionType `json:"reactType"`
 }
 
 type IncomingCreateRoomData struct {
-	ChatName   string   `json:"chatName"`
-	Background domain.BackgroundColor   `json:"background"`
-	IsPublic   bool     `json:"isPublic"`
+	ChatName   string                 `json:"chatName"`
+	Background domain.BackgroundColor `json:"background"`
+	IsPublic   bool                   `json:"isPublic"`
 }
 
 type OutgoingCreateRoomData struct {
-	RoomId     string   `json:"roomId"`
-	CreatedBy  string   `json:"createdBy"`
-	ChatName   string   `json:"chatName"`
-	UserId    []string `json:"userId"`
-	Background domain.BackgroundColor   `json:"background"`
-	IsPublic   bool     `json:"isPublic"`
+	RoomId     string                 `json:"roomId"`
+	CreatedBy  string                 `json:"createdBy"`
+	ChatName   string                 `json:"chatName"`
+	UserId     []string               `json:"userId"`
+	Background domain.BackgroundColor `json:"background"`
+	IsPublic   bool                   `json:"isPublic"`
 }
 
 type IncomingJoinRoomData struct {
@@ -91,9 +93,9 @@ type IncomingJoinRoomData struct {
 }
 
 type RoomMemberJoinedData struct {
-	RoomId  string      `json:"roomId"`
-	UserId  string      `json:"userId"`
-	Name    string      `json:"name"`
+	RoomId  string             `json:"roomId"`
+	UserId  string             `json:"userId"`
+	Name    string             `json:"name"`
 	Profile domain.ProfileType `json:"profile,omitempty"`
 }
 

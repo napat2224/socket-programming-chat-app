@@ -151,16 +151,15 @@ func (h *WsHandler) handleTextMessage(conn *ws.Connection, envelope ws.WsMessage
 		log.Println("[ws] failed to save message:", err)
 		return
 	}
-    if msg == nil {
-        log.Println("[ws] ERROR: chatService returned nil msg with nil error")
-        return
-    }
+	if msg == nil {
+		log.Println("[ws] ERROR: chatService returned nil msg with nil error")
+		return
+	}
 
-		replyContent := ""
+	replyContent := ""
 	if in.ReplyContent != nil {
 		replyContent = *in.ReplyContent
 	}
-
 
 	out := ws.OutgoingTextData{
 		MessageId:     msg.ID,
@@ -168,9 +167,10 @@ func (h *WsHandler) handleTextMessage(conn *ws.Connection, envelope ws.WsMessage
 		Content:       msg.Content,
 		RoomId:        msg.RoomID,
 		ReplyContent:  &replyContent,
-		Reactions:     []domain.ReactionType{},    
+		Reactions:     []domain.ReactionType{},
 		SenderName:    userInfo.Name,
 		SenderProfile: userInfo.Profile,
+		CreatedAt:     msg.CreatedAt,
 	}
 
 	outEnvelope := ws.WsMessage{
@@ -194,11 +194,10 @@ func (h *WsHandler) handleReactMessage(conn *ws.Connection, envelope ws.WsMessag
 		in.MessageId,
 		in.ReactType,
 	)
-		if err != nil {
+	if err != nil {
 		log.Println("[ws] failed to add reaction:", err)
 		return
 	}
-
 
 	out := ws.OutgoingReactData{
 		MessageId: in.MessageId,

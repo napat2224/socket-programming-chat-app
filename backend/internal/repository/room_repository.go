@@ -128,10 +128,19 @@ func (r *RoomRepository) GetAllPublicRooms(ctx context.Context) ([]*domain.Room,
 }
 
 func (r *RoomRepository) GetPrivateRoomByTargetID(ctx context.Context, currentUserID string, targetID string) (*domain.Room, error) {
-	filter := bson.M{"$or": []bson.M{
-		{"prophet_id": currentUserID, "customer_id": targetID},
-		{"prophet_id": targetID, "customer_id": currentUserID},
-	}}
+	// Find a private room where both users are members
+	filter := bson.M{
+		"member_ids": bson.M{
+			"$all": []string{currentUserID, targetID},
+		},
+		"is_public": false,
+		"$expr": bson.M{
+			"$eq": []interface{}{
+				bson.M{"$size": "$member_ids"},
+				2,
+			},
+		},
+	}
 	room := models.RoomModel{}
 	err := r.collection.FindOne(ctx, filter).Decode(&room)
 	if err != nil {
@@ -148,10 +157,45 @@ func (r *RoomRepository) JoinRoom(ctx context.Context, roomID string, userID str
 	}
 
 	filter := bson.M{"_id": objID}
-	update := bson.M{"$push": bson.M{"member_ids": userID}}
+	update := bson.M{"$addToSet": bson.M{"member_ids": userID}}
 	_, err = r.collection.UpdateOne(ctx, filter, update)
 	if err != nil {
 		return err
 	}
 	return nil
+}
+
+func (r *RoomRepository) GetChatRoomsByRoomID(ctx context.Context, roomID string) (*domain.Room, error) {
+	oid, err := primitive.ObjectIDFromHex(roomID)
+	if err != nil {
+		return nil, err
+	}
+
+	filter := bson.M{"_id": oid}
+
+	var room models.RoomModel
+	err = r.collection.FindOne(ctx, filter).Decode(&room)
+	if err != nil {
+		return nil, err
+	}
+
+	return room.ToDomain(), nil
+}
+
+func (r *RoomRepository) UpdateRoom(ctx context.Context, roomID string, background string) (*domain.Room, error) {
+	roomOID, err := primitive.ObjectIDFromHex(roomID)
+	if err != nil {
+		log.Printf("[GetChatRoomsByRoomID] invalid roomID %s: %v", roomID, err)
+		return nil, err
+	}
+
+	filter := bson.M{"_id": roomOID}
+	update := bson.M{"$set": bson.M{"backgroundColor": background}}
+
+	opts := options.FindOneAndUpdate().SetReturnDocument(options.After)
+	var room domain.Room
+	if err := r.collection.FindOneAndUpdate(ctx, filter, update, opts).Decode(&room); err != nil {
+		return nil, err
+	}
+	return &room, nil
 }

@@ -87,4 +87,35 @@ func (r *UserRepository) FindByName(ctx context.Context, name string) (*domain.U
 		Name:    userModel.Name,
 		Profile: domain.ProfileType(userModel.Profile),
 	}, nil
+func (r *UserRepository) GetUsersByIDs(ctx context.Context, ids []string) ([]*domain.User, error) {
+    filter := bson.M{"user_id": bson.M{"$in": ids}}
+
+    cur, err := r.collection.Find(ctx, filter)
+    if err != nil {
+        return nil, err
+    }
+    defer cur.Close(ctx)
+
+    var res []*domain.User
+
+    for cur.Next(ctx) {
+        var m models.UserModel
+        if err := cur.Decode(&m); err != nil {
+            return nil, err
+        }
+
+        u := &domain.User{
+            UserID:  m.UserID,
+            Name:    m.Name,
+            Profile: domain.ProfileType(m.Profile),
+        }
+
+        res = append(res, u)
+    }
+
+    if err := cur.Err(); err != nil {
+        return nil, err
+    }
+
+    return res, nil
 }

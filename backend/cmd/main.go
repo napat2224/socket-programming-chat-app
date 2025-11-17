@@ -107,7 +107,7 @@ func main() {
 	userService := services.NewUserService(authService, userRepo)
 	userHandler := handlers.NewUserHandler(userService)
 
-	chat := services.NewChatService(roomRepo, messageRepo)
+	chat := services.NewChatService(roomRepo, messageRepo, userRepo)
 	hub := ws.NewHub()
 	wsHandler := handlers.NewWsHandler(hub, chat)
 	authMid := middleware.NewAuthMiddleware(authService)
