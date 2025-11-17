@@ -23,7 +23,7 @@ export default function SignInPage() {
       const cred = await doSignInWithEmailAndPassword(email, password);
       const token = await cred.user.getIdToken();
       console.log("Token:", token);
-      router.replace("/");
+      router.replace("/home");
     } catch (err: Error | unknown) {
       console.error(err);
       setError(err instanceof Error ? err.message : "Sign in failed");
@@ -40,7 +40,7 @@ export default function SignInPage() {
       if (isNewUser) {
         router.replace(`/profile?token=${encodeURIComponent(token)}`);
       } else {
-        router.replace("/");
+        router.replace("/home");
       }
     } catch (err: Error | unknown) {
       console.error(err);
