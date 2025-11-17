@@ -148,7 +148,7 @@ func (r *RoomRepository) JoinRoom(ctx context.Context, roomID string, userID str
 	}
 
 	filter := bson.M{"_id": objID}
-	update := bson.M{"$push": bson.M{"member_ids": userID}}
+	update := bson.M{"$addToSet": bson.M{"member_ids": userID}}
 	_, err = r.collection.UpdateOne(ctx, filter, update)
 	if err != nil {
 		return err
@@ -157,23 +157,20 @@ func (r *RoomRepository) JoinRoom(ctx context.Context, roomID string, userID str
 }
 
 func (r *RoomRepository) GetChatRoomsByRoomID(ctx context.Context, roomID string) (*domain.Room, error) {
-	roomOID, err := primitive.ObjectIDFromHex(roomID)
+	oid, err := primitive.ObjectIDFromHex(roomID)
 	if err != nil {
-		log.Printf("[GetChatRoomsByRoomID] invalid roomID %s: %v", roomID, err)
 		return nil, err
 	}
 
-	filter := bson.M{"_id": roomOID}
+	filter := bson.M{"_id": oid}
 
-	roomModel := &models.RoomModel{}
-	if err := r.collection.FindOne(ctx, filter).Decode(roomModel); err != nil {
-		if err == mongo.ErrNoDocuments {
-			return nil, nil
-		}
+	var room models.RoomModel
+	err = r.collection.FindOne(ctx, filter).Decode(&room)
+	if err != nil {
 		return nil, err
 	}
 
-	return roomModel.ToDomain(), nil
+	return room.ToDomain(), nil
 }
 
 func (r *RoomRepository) UpdateRoom(ctx context.Context, roomID string, background string) (*domain.Room, error) {
