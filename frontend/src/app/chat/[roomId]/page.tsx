@@ -21,7 +21,7 @@ export default function ChatRoomPage() {
   const [messages, setMessages] = useState<MessageProps[]>([]);
   const [members, setMembers] = useState<MemberProps[]>([]);
   const [roomName, setRoomName] = useState<string | null>(null);
-  const userId = "HVUHBTjrFqVV89zwziLqrQthFVz2";
+  const userId = auth.currentUser?.uid;
 
   useEffect(() => {
     if (!roomId) return;
@@ -57,6 +57,71 @@ export default function ChatRoomPage() {
       cancelled = true;
     };
   }, [roomId]);
+  
+  useEffect(() => {
+    if (!roomId) return;
+    let cancelled = false;
+
+    const fetchMessages = async () => {
+      try {
+        const res = await api.get(`/api/rooms/${roomId}/messages`);
+        const mes = res.data.data as {
+          roomId: string;
+          id: string;
+          senderId: string;
+          senderProfile: number;
+          senderName: string;
+          content: string;
+          replyTo?: string;
+          reactions?: string[];
+          createdAt: string;
+        }[];
+
+        if (cancelled) return;
+
+        setMessages(
+          (mes ?? []).map(m => ({
+            ...m,
+            senderName: m.senderName ?? "",
+            senderProfile: m.senderProfile ?? "",
+            replyTo: m.replyTo ?? null,
+            reactions: m.reactions ?? [],
+          }))
+        );
+      } catch (err) {
+        console.error("Error fetching messages:", err);
+      }
+    };
+
+    fetchMessages();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [roomId]);
+
+  useEffect(() => {
+    if (!roomId) return;
+    if (theme == null) return;
+    let cancelled = false;
+
+    const updateBackgroundColor = async () => {
+      try {
+        const res = await api.patch(`/api/rooms/${roomId}`, {
+          backgroundColor: theme,
+        });
+        if (cancelled) return;
+      } catch (err) {
+        if (!cancelled) {
+          console.error("Error updating room background color:", err);
+        }
+      }
+    };
+    updateBackgroundColor();
+    return () => {
+      cancelled = true;
+    };
+  }, [roomId, theme]);
 
   useEffect(() => {
     const removeHandler = addMessageHandler((msg: WsMessage) => {
