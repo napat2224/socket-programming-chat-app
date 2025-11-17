@@ -34,6 +34,7 @@ func SetupRoutes(
 func setupUserRoutes(api fiber.Router, userHandler *handlers.UserHandler, authMiddleware *middleware.AuthMiddleware) {
 	// User routes
 	users := api.Group("/users")
+	users.Post("/check-name",userHandler.CheckUsername)
 	users.Post("/register", userHandler.Register)
 	users.Get("/me", authMiddleware.AddClaims, userHandler.GetMe)
 }

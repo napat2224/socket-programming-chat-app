@@ -37,6 +37,15 @@ type RegisterResponse struct {
 	Message string `json:"message,omitempty"`
 }
 
+type CheckUsernameRequest struct {
+    Name string `json:"name" validate:"required"`
+}
+
+type CheckUsernameResponse struct {
+    Available bool   `json:"available"`
+    Message   string `json:"message,omitempty"`
+}
+
 func (h *UserHandler) Register(c *fiber.Ctx) error {
 	var req RegisterRequest
 
@@ -95,4 +104,35 @@ func (h *UserHandler) GetMe(c *fiber.Ctx) error {
 		Name:    claims.Name,
 		Profile: claims.Profile,
 	})
+}
+
+func (h *UserHandler) CheckUsername(c *fiber.Ctx) error {
+    var req CheckUsernameRequest
+
+    if err := c.BodyParser(&req); err != nil {
+        return c.Status(fiber.StatusBadRequest).JSON(CheckUsernameResponse{
+            Available: false,
+            Message:   "Invalid request body",
+        })
+    }
+
+    ctx := context.Background()
+    available, err := h.userService.IsUsernameAvailable(ctx, req.Name)
+    if err != nil {
+        return c.Status(fiber.StatusInternalServerError).JSON(CheckUsernameResponse{
+            Available: false,
+            Message:   "Failed to check username",
+        })
+    }
+
+    if !available {
+        return c.Status(fiber.StatusConflict).JSON(CheckUsernameResponse{
+            Available: false,
+            Message:   "username is already taken",
+        })
+    }
+
+    return c.Status(fiber.StatusOK).JSON(CheckUsernameResponse{
+        Available: true,
+    })
 }

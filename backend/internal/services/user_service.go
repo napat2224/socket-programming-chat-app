@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"strconv"
+	"strings"
 
 	"github.com/napat2224/socket-programming-chat-app/internal/domain"
 	"github.com/napat2224/socket-programming-chat-app/internal/repository"
@@ -62,4 +63,17 @@ func (s *UserService) GetMe(ctx context.Context, userID string) (*domain.User, e
 		return nil, err
 	}
 	return user, nil
+}
+
+func (s *UserService) IsUsernameAvailable(ctx context.Context, name string) (bool, error) {
+    name = strings.TrimSpace(name)
+    if name == "" {
+        return false, status.Error(codes.InvalidArgument, "name must not be empty")
+    }
+
+    user, err := s.repo.FindByName(ctx, name)
+    if err != nil {
+        return false, status.Errorf(codes.Internal, "failed to check username uniqueness: %v", err)
+    }
+    return user == nil, nil
 }
