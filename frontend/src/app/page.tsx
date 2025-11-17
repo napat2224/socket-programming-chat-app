@@ -86,7 +86,7 @@ export default function Home() {
       const roomId = json.data.id;
 
       // Navigate to chat
-      router.push(`/chat/private/${roomId}`);
+      router.push(`/chat/${roomId}`);
     } catch (error) {
       console.error("Error opening private chat:", error);
       alert("Failed to open private chat. Please try again.");
