@@ -128,10 +128,19 @@ func (r *RoomRepository) GetAllPublicRooms(ctx context.Context) ([]*domain.Room,
 }
 
 func (r *RoomRepository) GetPrivateRoomByTargetID(ctx context.Context, currentUserID string, targetID string) (*domain.Room, error) {
-	filter := bson.M{"$or": []bson.M{
-		{"prophet_id": currentUserID, "customer_id": targetID},
-		{"prophet_id": targetID, "customer_id": currentUserID},
-	}}
+	// Find a private room where both users are members
+	filter := bson.M{
+		"member_ids": bson.M{
+			"$all": []string{currentUserID, targetID},
+		},
+		"is_public": false,
+		"$expr": bson.M{
+			"$eq": []interface{}{
+				bson.M{"$size": "$member_ids"},
+				2,
+			},
+		},
+	}
 	room := models.RoomModel{}
 	err := r.collection.FindOne(ctx, filter).Decode(&room)
 	if err != nil {
