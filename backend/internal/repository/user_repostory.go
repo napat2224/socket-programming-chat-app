@@ -87,6 +87,8 @@ func (r *UserRepository) FindByName(ctx context.Context, name string) (*domain.U
 		Name:    userModel.Name,
 		Profile: domain.ProfileType(userModel.Profile),
 	}, nil
+}
+
 func (r *UserRepository) GetUsersByIDs(ctx context.Context, ids []string) ([]*domain.User, error) {
     filter := bson.M{"user_id": bson.M{"$in": ids}}
 
