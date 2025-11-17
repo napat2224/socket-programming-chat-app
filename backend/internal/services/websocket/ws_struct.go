@@ -2,6 +2,7 @@ package websocket
 
 import (
 	"encoding/json"
+	"time"
 
 	domain "github.com/napat2224/socket-programming-chat-app/internal/domain"
 )
@@ -59,6 +60,7 @@ type OutgoingTextData struct {
 	SenderName    string                `json:"senderName"`
 	Reactions     []domain.ReactionType `json:"reactions"`
 	SenderProfile domain.ProfileType    `json:"senderProfile,omitempty"`
+	CreatedAt     time.Time             `json:"createdAt"`
 }
 
 type IncomingReactData struct {
