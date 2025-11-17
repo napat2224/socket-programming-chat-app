@@ -175,16 +175,39 @@ func (s *ChatService) GetPrivateRoomByTargetID(ctx context.Context, currentUserI
 	room, _ := s.roomRepo.GetPrivateRoomByTargetID(ctx, currentUserID, targetID)
 	if room == nil {
 		log.Println("no private room found, creating new one")
+
+		// Fetch user names
+		currentUser, err := s.userRepo.FindById(ctx, currentUserID)
+		if err != nil {
+			log.Println("error fetching current user:", err)
+			return nil, err
+		}
+		targetUser, err := s.userRepo.FindById(ctx, targetID)
+		if err != nil {
+			log.Println("error fetching target user:", err)
+			return nil, err
+		}
+
+		// Use user names or fall back to IDs if names not found
+		currentUserName := currentUserID
+		targetUserName := targetID
+		if currentUser != nil {
+			currentUserName = currentUser.Name
+		}
+		if targetUser != nil {
+			targetUserName = targetUser.Name
+		}
+
 		room = &domain.Room{
 			ID:              "",
 			CreatorID:       currentUserID,
 			MemberIDs:       []string{currentUserID, targetID},
-			RoomName:        fmt.Sprintf("%s and %s", currentUserID, targetID),
+			RoomName:        fmt.Sprintf("%s and %s", currentUserName, targetUserName),
 			BackgroundColor: domain.ColorBlue,
 			LastMessageSent: time.Time{},
 			IsPublic:        false, // create private room by default
 		}
-		room, err := s.roomRepo.SaveRoom(ctx, room)
+		room, err = s.roomRepo.SaveRoom(ctx, room)
 		if err != nil {
 			log.Println("error creating private room:", err)
 			return nil, err
