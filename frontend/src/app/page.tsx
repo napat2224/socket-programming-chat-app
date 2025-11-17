@@ -19,17 +19,11 @@ interface Room {
 }
 
 export default function Home() {
-  const { name: currentUserName, loading } = useAuth();
+  const { user, name: currentUserName, loading } = useAuth();
   const { isConnected, onlineUsers, sendMessage, addMessageHandler } =
     useWebSocket();
   const [rooms, setRooms] = useState<Room[]>([]);
   const router = useRouter();
-
-  useEffect(() => {
-    if (!loading && !currentUserName) {
-      router.push("/signin");
-    }
-  }, [currentUserName, loading, router]);
 
   const fetchPublicRooms = useCallback(async () => {
     try {
@@ -62,36 +56,45 @@ export default function Home() {
     }
   }, []);
 
-  const handlePrivateChat = async (targetUserId: string) => {
-    try {
-      const token = await auth.currentUser?.getIdToken();
-      const currentUser = auth.currentUser?.uid;
-      if (!currentUser) return;
+  const handlePrivateChat = useCallback(
+    async (targetUserId: string) => {
+      try {
+        const token = await auth.currentUser?.getIdToken();
+        const currentUser = auth.currentUser?.uid;
+        if (!currentUser) return;
 
-      const apiUrl =
-        process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
+        const apiUrl =
+          process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
 
-      // Call backend to get or create private room
-      const res = await fetch(`${apiUrl}/api/rooms/private/${targetUserId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+        // Call backend to get or create private room
+        const res = await fetch(`${apiUrl}/api/rooms/private/${targetUserId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
-      if (!res.ok) {
-        throw new Error("Failed to fetch private room");
+        if (!res.ok) {
+          throw new Error("Failed to fetch private room");
+        }
+
+        const json = await res.json();
+        const roomId = json.data.id;
+
+        // Navigate to chat
+        router.push(`/chat/${roomId}`);
+      } catch (error) {
+        console.error("Error opening private chat:", error);
+        alert("Failed to open private chat. Please try again.");
       }
+    },
+    [router]
+  );
 
-      const json = await res.json();
-      const roomId = json.data.id;
-
-      // Navigate to chat
-      router.push(`/chat/${roomId}`);
-    } catch (error) {
-      console.error("Error opening private chat:", error);
-      alert("Failed to open private chat. Please try again.");
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push("/signin");
     }
-  };
+  }, [user, loading, router]);
 
   useEffect(() => {
     // PAGE-SPECIFIC: Handle join_room messages
@@ -115,6 +118,20 @@ export default function Home() {
 
     return unsubscribe;
   }, [isConnected, addMessageHandler, fetchPublicRooms, router]);
+
+  // Show loading screen while auth is being checked
+  if (loading) {
+    return (
+      <div className="w-full h-screen flex items-center justify-center bg-primary">
+        <div className="text-xl">Loading...</div>
+      </div>
+    );
+  }
+
+  // Don't render content if not authenticated (will redirect)
+  if (!user) {
+    return null;
+  }
 
   return (
     <>

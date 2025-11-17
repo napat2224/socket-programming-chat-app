@@ -1,29 +1,37 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   doSignInWithEmailAndPassword,
   doSignInWithGoogle,
 } from "@/lib/firebase/auth";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/context/authContext";
 
 export default function SignInPage() {
   const router = useRouter();
+  const { user, loading } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isSigningIn, setIsSigningIn] = useState(false);
 
+  // Redirect if already logged in
+  useEffect(() => {
+    if (!loading && user) {
+      router.replace("/");
+    }
+  }, [user, loading, router]);
+
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isSigningIn) return;
     setIsSigningIn(true);
+    setError("");
     try {
-      const cred = await doSignInWithEmailAndPassword(email, password);
-      const token = await cred.user.getIdToken();
-      console.log("Token:", token);
-      router.replace("/");
+      await doSignInWithEmailAndPassword(email, password);
+      // Don't manually route - let the useEffect above handle it once auth state updates
     } catch (err: Error | unknown) {
       console.error(err);
       setError(err instanceof Error ? err.message : "Sign in failed");
@@ -34,14 +42,14 @@ export default function SignInPage() {
   const handleGoogleSignIn = async () => {
     if (isSigningIn) return;
     setIsSigningIn(true);
+    setError("");
     try {
       const { token, isNewUser } = await doSignInWithGoogle();
 
       if (isNewUser) {
         router.replace(`/profile?token=${encodeURIComponent(token)}`);
-      } else {
-        router.replace("/");
       }
+      // For existing users, let the useEffect handle redirect once auth state updates
     } catch (err: Error | unknown) {
       console.error(err);
       setError("Google sign-in failed");

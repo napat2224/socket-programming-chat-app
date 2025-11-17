@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { doCreateUserWithEmailAndPassword } from "@/lib/firebase/auth";
 import { toast } from "sonner";
@@ -13,6 +13,7 @@ import axios from "axios";
 
 export default function RegisterPage() {
   const router = useRouter();
+  const { user, loading: authLoading, refreshUser } = useAuth();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -20,7 +21,13 @@ export default function RegisterPage() {
   const [profile, setProfile] = useState<number>(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const { refreshUser } = useAuth();
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (!authLoading && user) {
+      router.replace("/");
+    }
+  }, [user, authLoading, router]);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -88,7 +95,7 @@ export default function RegisterPage() {
       await refreshUser();
       toast("Registration successful!");
 
-      router.push("/");
+      // Don't manually route - let the useEffect handle it once auth state updates
     } catch (err: Error | unknown) {
       setError(err instanceof Error ? err.message : "Registration failed");
     } finally {

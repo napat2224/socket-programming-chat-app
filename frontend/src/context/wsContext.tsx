@@ -65,13 +65,14 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const reconnectAttemptsRef = useRef(0);
   const maxReconnectAttempts = 5;
+  const shouldReconnectRef = useRef(false); // Track if we should attempt reconnection
 
   const connectWebSocket = useCallback(async () => {
     try {
       // Get Firebase auth token
       const currentUser = auth.currentUser;
       if (!currentUser) {
-        console.error("User not authenticated");
+        console.log("WebSocket connection skipped: User not authenticated");
         return;
       }
 
@@ -174,8 +175,11 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
         setIsConnected(false);
         wsRef.current = null;
 
-        // Attempt to reconnect with exponential backoff
-        if (reconnectAttemptsRef.current < maxReconnectAttempts) {
+        // Only attempt to reconnect if we should (user is still authenticated)
+        if (
+          shouldReconnectRef.current &&
+          reconnectAttemptsRef.current < maxReconnectAttempts
+        ) {
           const delay = Math.min(
             1000 * Math.pow(2, reconnectAttemptsRef.current),
             30000
@@ -186,7 +190,7 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
             reconnectAttemptsRef.current++;
             connectWebSocket();
           }, delay);
-        } else {
+        } else if (reconnectAttemptsRef.current >= maxReconnectAttempts) {
           console.error("Max reconnection attempts reached");
         }
       };
@@ -207,11 +211,13 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
 
           // Only connect WebSocket if user has completed registration
           if (hasName && hasProfile) {
+            shouldReconnectRef.current = true; // Enable reconnection
             connectWebSocket();
           } else {
             console.log(
               "User hasn't completed registration yet, skipping WebSocket connection"
             );
+            shouldReconnectRef.current = false; // Disable reconnection
             // Close existing connection if any
             if (wsRef.current?.readyState === WebSocket.OPEN) {
               wsRef.current.close();
@@ -223,7 +229,8 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
           console.error("Error checking user claims:", error);
         }
       } else {
-        // User logged out, close WebSocket
+        // User logged out, disable reconnection and close WebSocket
+        shouldReconnectRef.current = false;
         if (wsRef.current?.readyState === WebSocket.OPEN) {
           wsRef.current.close();
         }
@@ -234,6 +241,7 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
 
     return () => {
       unsubscribe();
+      shouldReconnectRef.current = false; // Disable reconnection on cleanup
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
       }
