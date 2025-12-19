@@ -4,7 +4,7 @@ import "./globals.css";
 import { Toaster } from "sonner";
 import { AuthProvider } from "@/context/authContext";
 import { WebSocketProvider } from "@/context/wsContext";
-import Navbar from "@/components/ui/navbar";
+import SnowfallComponent from "@/components/SnowFallComponent";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,6 +31,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <SnowfallComponent />
         <AuthProvider>
           <WebSocketProvider>
             <main>{children}</main>
